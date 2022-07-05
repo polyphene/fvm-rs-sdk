@@ -1,0 +1,64 @@
+name: Continuous integration
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out sdk
+        uses: actions/checkout@v2
+      - name: Installing Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
+        with:
+          profile: minimal
+          override: true
+          components: rustfmt
+      - name: Running fmt
+        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+        with:
+          command: fmt
+          args: -- --check
+  cargo:
+    needs: [ rustfmt ]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        name: [ build, check-clippy, test ]
+        include:
+          - name: build
+            key: v3
+            push: true
+            command: build
+          - name: check-clippy
+            key: v3
+            command: clippy
+            args: --all --all-targets
+            components: clippy
+          - name: test
+            key: v3
+            command: test
+            args: --all --all-features
+    env:
+      CARGO_TERM_COLOR: always
+    name: ${{matrix.os}} - ${{ matrix.name }}
+    steps:
+      - name: Checking out sdk
+        uses: actions/checkout@v2
+        with:
+          submodules: ${{ matrix.submodules }}
+      - name: Installing Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
+        with:
+          profile: minimal
+          override: true
+          components: ${{ matrix.components }}
