@@ -1,0 +1,13 @@
+[package]
+name = "fvm-rs-sdk"
+version = "0.0.1"
+authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
+edition = "2018"
+license = "MIT"
+description = "This crate provides an interface for developers to build actors to deploy on the Filecoin chain."
+documentation = "https://docs.holium.org"
+readme = "README.md"
+homepage = "https://holium.org"
+repository = "https://github.com/polyphene/holium-rs"
+keywords = ["fvm", "sdk"]
+categories = ["api-bindings"]
