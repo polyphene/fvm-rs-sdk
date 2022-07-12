@@ -13,6 +13,7 @@ extra-traits = ["syn/extra-traits"]
 strict-macro = []
 
 [dependencies]
+fvm-rs-sdk-backend = { path="../backend", version="0.0.1" }
 quote = "^1.0.20"
 proc-macro2 = "^1.0.40"
 syn = { version = "^1.0.98", features = ["visit", "full"] }

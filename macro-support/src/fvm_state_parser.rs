@@ -21,11 +21,38 @@ impl<'a> ConvertToAst for &'a mut syn::ItemStruct {
     type Target = ast::Struct;
 
     fn convert(self) -> Result<Self::Target, Diagnostic> {
-        // TODO Implement
+        // No lifetime to make sure that we can handle it correctly
+        if self.generics.params.len() > 0 {
+            bail_span!(
+                self.generics,
+                "structs with #[fvm_state] cannot have lifetime or type parameters currently"
+            );
+        }
 
         // When handling struct, first create fields objects
         let mut fields = Vec::new();
+        for (i, field) in self.fields.iter_mut().enumerate() {
+            // Fields visibility has to be public to be taken into account
+            match field.vis {
+                syn::Visibility::Public(..) => {}
+                _ => continue,
+            }
 
+            // Derive field name from ident
+            let (name, member) = match &field.ident {
+                Some(ident) => (ident.to_string(), syn::Member::Named(ident.clone())),
+                None => (i.to_string(), syn::Member::Unnamed(i.into())),
+            };
+
+            fields.push(ast::StructField {
+                rust_name: member,
+                name,
+                struct_name: self.ident.clone(),
+                ty: field.ty.clone(),
+            });
+        }
+
+        // Generate the AST object for the Struct
         Ok(ast::Struct {
             rust_name: self.ident.clone(),
             name: self.ident.to_string(),
@@ -50,8 +77,13 @@ impl<'a> MacroParse<&'a mut TokenStream> for syn::Item {
     ) -> Result<(), Diagnostic> {
         // Match of Item types to parse & generate our AST
         match self {
+            // Handles strcutures
+            syn::Item::Struct(mut s) => {
+                program.structs.push((&mut s).convert()?);
+                s.to_tokens(tokens);
+            }
             _ => {
-                bail_span!(self, "TODO Implement for struct",);
+                bail_span!(self, "#[fvm_state] can only be applied to a public struct",);
             }
         }
 
