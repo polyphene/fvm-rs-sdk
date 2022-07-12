@@ -13,6 +13,7 @@ proc-macro = true
 
 [dependencies]
 quote = "^1.0.9"
+fvm-rs-sdk-macro-support={ path="../macro-support", version="0.0.1" }
 
 [dev-dependencies]
 trybuild = "^1.0.63"

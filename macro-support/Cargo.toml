@@ -1,0 +1,18 @@
+[package]
+name = "fvm-rs-sdk-macro-support"
+version = "0.0.1"
+authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
+edition = "2018"
+license = "MIT"
+description = "Support crate for the procedural macro for the Filecoin Virtual MAchine Rust SDK."
+homepage = "http://fvm.filecoin.io"
+keywords = ["fvm", "sdk"]
+
+[features]
+extra-traits = ["syn/extra-traits"]
+strict-macro = []
+
+[dependencies]
+quote = "^1.0.20"
+proc-macro2 = "^1.0.40"
+syn = { version = "^1.0.98", features = ["visit", "full"] }
