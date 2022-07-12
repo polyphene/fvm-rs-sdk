@@ -24,7 +24,7 @@ impl TryToTokens for ast::Program {
     // Generate wrappers for all the items that we've found
     fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
         // Handling exported functions
-        let mut errors = Vec::new();
+        let mut _errors = Vec::new();
 
         // Handling tagged structures
         for s in self.structs.iter() {
