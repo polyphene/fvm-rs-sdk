@@ -1,0 +1,18 @@
+[package]
+name = "fvm-rs-sdk-macro"
+version = "0.0.1"
+authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
+edition = "2018"
+license = "MIT"
+description = "Procedural macro for the Filecoin Virtual Machine Rust SDK."
+homepage = "http://fvm.filecoin.io"
+keywords = ["fvm", "sdk"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "^1.0.9"
+
+[dev-dependencies]
+trybuild = "^1.0.63"
