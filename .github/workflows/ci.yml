@@ -47,7 +47,7 @@ jobs:
           - name: test
             key: v3
             command: test
-            args: --all --all-features --exclude fvm_rs_sdk
+            args: --all --all-features
     env:
       CARGO_TERM_COLOR: always
     name: ${{matrix.os}} - ${{ matrix.name }}
