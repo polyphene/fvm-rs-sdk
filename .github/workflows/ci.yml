@@ -62,3 +62,8 @@ jobs:
           profile: minimal
           override: true
           components: ${{ matrix.components }}
+      - name: Running ${{ matrix.command }}
+        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
+        with:
+          command: ${{ matrix.command }}
+          args: ${{ matrix.args }}
