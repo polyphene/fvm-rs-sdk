@@ -7,7 +7,7 @@ use quote::quote;
 
 #[proc_macro_attribute]
 pub fn fvm_state(attr: TokenStream, input: TokenStream) -> TokenStream {
-    match fvm_rs_sdk_macro_support::expand_state(attr.into, input.into()) {
+    match fvm_rs_sdk_macro_support::expand_state(attr.into(), input.into()) {
         Ok(tokens) => tokens.into(),
         Err(diagnostic) => (quote! { #diagnostic }).into(),
     }
