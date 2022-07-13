@@ -54,7 +54,7 @@ mod tests {
 
         (quote! {
             #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
-            #[serde( crate = "fvm_rs_sdk::serde")]tatus
+            #[serde( crate = "fvm_rs_sdk::serde")]
 
             pub struct MockStruct {
                 pub count: u64
