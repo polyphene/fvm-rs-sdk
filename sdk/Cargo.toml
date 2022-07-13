@@ -15,3 +15,5 @@ fvm_shared = "0.8.0"
 fvm_sdk = { version = "^1.0.0", features = ["testing"] }
 fvm_rs_sdk_macro = { path = "../macro", version = "0.0.1" }
 fvm_ipld_encoding = "^0.2.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_tuple = "0.5"
