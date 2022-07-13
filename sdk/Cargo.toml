@@ -1,5 +1,5 @@
 [package]
-name = "fvm-rs-sdk"
+name = "fvm_rs_sdk"
 version = "0.0.1"
 authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
 edition = "2018"
@@ -13,4 +13,5 @@ categories = ["api-bindings"]
 [dependencies]
 fvm_shared = "0.8.0"
 fvm_sdk = { version = "^1.0.0", features = ["testing"] }
-fvm-rs-sdk-macro = { path = "../macro", version = "0.0.1" }
+fvm_rs_sdk_macro = { path = "../macro", version = "0.0.1" }
+fvm_ipld_encoding = "^0.2.2"
