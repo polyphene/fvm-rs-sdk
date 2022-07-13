@@ -1,0 +1,5 @@
+error: structs with #[fvm_state] cannot have lifetime or type parameters
+  --> tests/proc-macro-tests/fvm_state.rs:10:23
+   |
+10 | pub struct MockStruct2<'a> {
+   |                       ^^^^
