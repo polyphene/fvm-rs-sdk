@@ -1,5 +1,5 @@
 [package]
-name = "fvm-rs-sdk-backend"
+name = "fvm_rs_sdk_backend"
 version = "0.0.1"
 authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
 edition = "2018"
