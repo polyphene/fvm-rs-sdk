@@ -35,7 +35,8 @@ impl ToTokens for ast::Struct {
     fn to_tokens(&self, into: &mut TokenStream) {
         // Add derive for serialize & deserialize
         *into = (quote! {
-            #[derive(fvm_rs_sdk::internal::tuple::Serialize_tuple, fvm_rs_sdk::internal::tuple::Deserialize_tuple)]
+            #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
+            #[serde( crate = "fvm_rs_sdk::serde")]
             #into
         })
             .to_token_stream();
@@ -52,7 +53,9 @@ mod tests {
         let mut expected_final_stream = TokenStream::new();
 
         (quote! {
-            #[derive(fvm_rs_sdk::internal::tuple::Serialize_tuple, fvm_rs_sdk::internal::tuple::Deserialize_tuple)]
+            #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
+            #[serde( crate = "fvm_rs_sdk::serde")]tatus
+
             pub struct MockStruct {
                 pub count: u64
             }
