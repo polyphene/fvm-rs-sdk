@@ -72,7 +72,7 @@ impl Diagnostic {
     /// Attempt to generate a `Diagnostic` from a vector of other `Diagnostic` instances.
     /// If the `Vec` is empty, returns `Ok(())`, otherwise returns the new `Diagnostic`
     pub fn from_vec(diagnostics: Vec<Diagnostic>) -> Result<(), Diagnostic> {
-        if diagnostics.len() == 0 {
+        if diagnostics.is_empty() {
             Ok(())
         } else {
             Err(Diagnostic {
@@ -132,5 +132,210 @@ impl ToTokens for Diagnostic {
                 err.to_compile_error().to_tokens(dst);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_type_of<T>(_: &T, expected_type: &str) {
+        assert_eq!(expected_type, std::any::type_name::<T>())
+    }
+
+    #[test]
+    fn generate_error_with_message() {
+        let diagnostic = Diagnostic::error("error");
+
+        match diagnostic.inner {
+            Repr::Single { text, span } => {
+                assert_eq!(text, String::from("error"));
+                assert!(span.is_none());
+            }
+            _ => panic!("diagnostic inner should be single"),
+        }
+    }
+
+    #[test]
+    fn generate_error_with_span_message() {
+        let mock_ident = Ident::new("mock", Span::call_site());
+        let mock_ident_span = mock_ident.span();
+
+        let diagnostic = Diagnostic::span_error(mock_ident_span, "error");
+
+        match diagnostic.inner {
+            Repr::Single { text, span } => {
+                assert_eq!(text, String::from("error"));
+                match span {
+                    Some((start, end)) => {
+                        assert_type_of(&start, "proc_macro2::Span");
+                        assert_type_of(&end, "proc_macro2::Span");
+                    }
+                    _ => panic!("span should not be None"),
+                }
+            }
+            _ => panic!("diagnostic inner should be single"),
+        }
+    }
+
+    #[test]
+    fn extract_span() {
+        let extracted_span = extract_spans(&"string");
+        match extracted_span {
+            Some((start, end)) => {
+                assert_type_of(&start, "proc_macro2::Span");
+                assert_type_of(&end, "proc_macro2::Span");
+            }
+            None => panic!("extracted span should not be none"),
+        }
+    }
+
+    #[test]
+    fn span_error_from_token() {
+        let diagnostic = Diagnostic::spanned_error(&"string", "error");
+
+        match diagnostic.inner {
+            Repr::Single { text, span } => {
+                assert_eq!(text, String::from("error"));
+                match span {
+                    Some((start, end)) => {
+                        assert_type_of(&start, "proc_macro2::Span");
+                        assert_type_of(&end, "proc_macro2::Span");
+                    }
+                    _ => panic!("span should not be None"),
+                }
+            }
+            _ => panic!("diagnostic inner should be single"),
+        }
+    }
+
+    #[test]
+    fn error_from_multiple_diagnostic() {
+        let diagnostic1 = Diagnostic::error("error1");
+        let diagnostic2 = Diagnostic::error("error2");
+        let diagnostics_vector = vec![diagnostic1, diagnostic2];
+
+        let ok_res = Diagnostic::from_vec(vec![]);
+        assert!(ok_res.is_ok());
+
+        let err_res = Diagnostic::from_vec(diagnostics_vector);
+        match err_res {
+            Err(diagnostic) => match diagnostic.inner {
+                Repr::Multi { diagnostics } => {
+                    assert_eq!(diagnostics.len(), 2usize);
+                }
+                _ => panic!("diagnostic should be of type Multi with vector non empty"),
+            },
+            _ => panic!("result should be an error with vector non empty"),
+        }
+    }
+
+    #[test]
+    fn panic_from_diagnostic() {
+        let diagnostic_single = Diagnostic::error("error");
+        let diagnostic_multi = Diagnostic::from_vec(vec![
+            Diagnostic::error("error1"),
+            Diagnostic::error("error2"),
+        ])
+        .err()
+        .unwrap();
+
+        let panic_res_single = std::panic::catch_unwind(|| diagnostic_single.panic());
+        match panic_res_single {
+            Err(err) => match err.downcast::<String>() {
+                Ok(panic_msg_box) => {
+                    assert_eq!(panic_msg_box.as_str(), "error");
+                }
+                Err(_) => unreachable!(),
+            },
+            _ => panic!("panic() on single diagnostic should be an error in catch_unwind"),
+        }
+
+        let panic_res_multi = std::panic::catch_unwind(|| diagnostic_multi.panic());
+        match panic_res_multi {
+            Err(err) => match err.downcast::<String>() {
+                Ok(panic_msg_box) => {
+                    assert_eq!(panic_msg_box.as_str(), "error1");
+                }
+                Err(_) => unreachable!(),
+            },
+            _ => panic!("panic() on multi diagnostic should be an error in catch_unwind"),
+        }
+    }
+
+    #[test]
+    fn diagnostic_from_syn_error() {
+        let mock_ident = Ident::new("mock", Span::call_site());
+        let mock_ident_span = mock_ident.span();
+
+        let syn_error = Error::new(mock_ident_span, "error");
+
+        let diagnostic = Diagnostic::from(syn_error);
+
+        match diagnostic.inner {
+            Repr::SynError(error) => {
+                assert_eq!(error.to_string().as_str(), "error");
+            }
+            _ => panic!("diagnostic should be of type syn error"),
+        }
+    }
+
+    #[test]
+    fn diagnostic_single_to_tokens() {
+        let mut token_stream = TokenStream::new();
+
+        let diagnostic = Diagnostic::error("error");
+
+        diagnostic.to_tokens(&mut token_stream);
+
+        assert_eq!(token_stream.to_string(), "compile_error ! { \"error\" }");
+    }
+
+    #[test]
+    fn diagnostic_single_span_to_tokens() {
+        let mut token_stream = TokenStream::new();
+
+        let mock_ident = Ident::new("mock", Span::call_site());
+
+        let diagnostic = Diagnostic::span_error(mock_ident.span(), "error");
+
+        diagnostic.to_tokens(&mut token_stream);
+
+        assert_eq!(token_stream.to_string(), "compile_error ! { \"error\" }");
+    }
+
+    #[test]
+    fn diagnostic_multi_to_tokens() {
+        let mut token_stream = TokenStream::new();
+
+        let diagnostic = Diagnostic::from_vec(vec![
+            Diagnostic::error("error1"),
+            Diagnostic::error("error2"),
+        ])
+        .err()
+        .unwrap();
+
+        diagnostic.to_tokens(&mut token_stream);
+
+        assert_eq!(
+            token_stream.to_string(),
+            "compile_error ! { \"error1\" } compile_error ! { \"error2\" }"
+        );
+    }
+
+    #[test]
+    fn diagnostic_syn_error_to_tokens() {
+        let mut token_stream = TokenStream::new();
+
+        let mock_ident = Ident::new("mock", Span::call_site());
+        let mock_ident_span = mock_ident.span();
+
+        let syn_error = Error::new(mock_ident_span, "error");
+
+        let diagnostic = Diagnostic::from(syn_error);
+
+        diagnostic.to_tokens(&mut token_stream);
+
+        assert_eq!(token_stream.to_string(), "compile_error ! { \"error\" }");
     }
 }

@@ -3,7 +3,6 @@
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn;
 
 /// Conversion trait with context.
 ///
@@ -22,7 +21,7 @@ impl<'a> ConvertToAst for &'a mut syn::ItemStruct {
 
     fn convert(self) -> Result<Self::Target, Diagnostic> {
         // No lifetime to make sure that we can handle it correctly
-        if self.generics.params.len() > 0 {
+        if !self.generics.params.is_empty() {
             bail_span!(
                 self.generics,
                 "structs with #[fvm_state] cannot have lifetime or type parameters currently"
