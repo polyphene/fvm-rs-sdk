@@ -42,12 +42,12 @@ jobs:
           - name: check-clippy
             key: v3
             command: clippy
-            args: --all --all-targets --exclude fvm_rs_sdk
+            args: --all --all-targets
             components: clippy
           - name: test
             key: v3
             command: test
-            args: --all --all-features
+            args: --all --all-features --exclude fvm_rs_sdk
     env:
       CARGO_TERM_COLOR: always
     name: ${{matrix.os}} - ${{ matrix.name }}
