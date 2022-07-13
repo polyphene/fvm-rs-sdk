@@ -42,7 +42,7 @@ jobs:
           - name: check-clippy
             key: v3
             command: clippy
-            args: --all --all-targets
+            args: --all --all-targets --exclude fvm_rs_sdk
             components: clippy
           - name: test
             key: v3
