@@ -6,6 +6,8 @@ use cid::Cid;
 use fvm_ipld_blockstore::Block;
 use fvm_sdk as sdk;
 
+use crate::state::error::Error::{InvalidCid, NonMatchingCid, PutFailed};
+
 /// A blockstore that delegates to IPLD syscalls.
 pub struct CborBlockstore;
 
@@ -18,14 +20,14 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         // If this fails, the _CID_ is invalid. I.e., we have a bug.
         sdk::ipld::get(cid)
             .map(Some)
-            .map_err(|e| anyhow!("get failed with {:?} on CID '{}'", e, cid))
+            .map_err(|e| InvalidCid(e, *cid).into())
     }
 
     fn put_keyed(&self, k: &Cid, block: &[u8]) -> Result<()> {
         let code = Code::try_from(k.hash().code()).map_err(|e| anyhow!(e.to_string()))?;
         let k2 = self.put(code, &Block::new(k.codec(), block))?;
         if k != &k2 {
-            return Err(anyhow!("put block with cid {} but has cid {}", k, k2));
+            return Err(NonMatchingCid(*k, k2).into());
         }
         Ok(())
     }
@@ -35,7 +37,7 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         D: AsRef<[u8]>,
     {
         let k = sdk::ipld::put(code.into(), SIZE, block.codec, block.data.as_ref())
-            .map_err(|e| anyhow!("put failed with {:?}", e))?;
+            .map_err(|e| PutFailed(e).into())?;
         Ok(k)
     }
 }

@@ -1,5 +1,6 @@
 //! State contains necessary code to handle a state object in an actor
 mod cbor;
+mod error;
 
 use cid::Cid;
 pub use fvm_rs_sdk_macro::fvm_state;
