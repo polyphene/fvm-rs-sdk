@@ -11,8 +11,11 @@ keywords = ["fvm", "sdk", "macro"]
 categories = ["api-bindings"]
 
 [dependencies]
-fvm_shared = "0.8.0"
+anyhow = "^1.0.58"
+cid = { version = "^0.8.4", default-features = false }
+fvm_ipld_blockstore = "^0.1.1"
+fvm_shared = "^0.8.0"
 fvm_sdk = { version = "^1.0.0", features = ["testing"] }
 fvm_rs_sdk_macro = { path = "../macro", version = "0.0.1" }
-serde = { version = "1.0", features = ["derive"] }
-serde_tuple = "0.5"
+serde = { version = "^1.0", features = ["derive"] }
+serde_tuple = "^0.5"

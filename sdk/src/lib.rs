@@ -1,4 +1,5 @@
-pub use fvm_rs_sdk_macro::fvm_state;
+mod state;
+
 pub use {fvm_sdk as syscall, fvm_shared as shared, serde, serde_tuple};
 
 pub fn hello_world() -> &'static str {
