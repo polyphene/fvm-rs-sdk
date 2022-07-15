@@ -13,7 +13,7 @@ pub struct CborBlockstore;
 
 // TODO: Don't hard-code the size. Unfortunately, there's no good way to get it from the
 //  codec at the moment.
-const SIZE: u32 = 32;
+pub const SIZE: u32 = 32;
 
 impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
     fn get(&self, cid: &Cid) -> Result<Option<Vec<u8>>> {
