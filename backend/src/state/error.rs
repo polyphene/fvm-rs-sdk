@@ -7,4 +7,7 @@ pub enum Error {
     /// This error is thrown when the specified codec is not handled
     #[error("unknown codec '{0}'")]
     UnknownCodec(String),
+    /// This error is thrown when the codec is not a literal string
+    #[error("invalid codec format, {0}")]
+    InvalidCodecFormat(String),
 }

@@ -305,6 +305,25 @@ mod tests {
     }
 
     #[test]
+    fn struct_with_invalid_codec_format() {
+        // Mock no attrs
+        let mut attrs_token_stream = TokenStream::new();
+        (quote! {
+            codec = dag-cbor
+        })
+        .to_tokens(&mut attrs_token_stream);
+
+        // Parse struct and attrs
+        match syn::parse2::<StateAttrs>(attrs_token_stream) {
+            Err(err) => assert_eq!(
+                err.to_string(),
+                "invalid codec format, expected string literal"
+            ),
+            _ => panic!("invalid codec format should throw an error"),
+        }
+    }
+
+    #[test]
     fn struct_with_no_attrs() {
         // Mock no attrs
         let mut attrs_token_stream = TokenStream::new();

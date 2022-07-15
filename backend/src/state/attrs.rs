@@ -6,7 +6,7 @@ use anyhow::Result;
 use proc_macro2::Ident;
 use syn::parse::{Parse, ParseStream, Result as SynResult};
 
-use crate::state::error::Error::{UnknownAttribute, UnknownCodec};
+use crate::state::error::Error::{InvalidCodecFormat, UnknownAttribute, UnknownCodec};
 
 // AnyIdent is a wrapper around Ident to be able to implement Parse trait
 struct AnyIdent(Ident);
@@ -50,10 +50,10 @@ impl Parse for StateAttr {
                         Ok(state_attr) => state_attr,
                         Err(err) => return Err(original.error(format!("{}", err))),
                     },
-                    Err(_) => {
-                        let ident = input.parse::<AnyIdent>()?.0;
-                        dbg!(ident.to_string());
-                        panic!("aa")
+                    Err(err) => {
+                        return Err(
+                            original.error(format!("{}", InvalidCodecFormat(err.to_string())))
+                        )
                     }
                 };
                 Ok(StateAttr::Codec(val))
