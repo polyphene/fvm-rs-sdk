@@ -4,7 +4,6 @@ use anyhow::{anyhow, Result};
 use cid::multihash::Code;
 use cid::Cid;
 use fvm_ipld_blockstore::Block;
-use fvm_sdk as sdk;
 
 use crate::state::error::Error::{InvalidCid, MismatchedCid, PutFailed};
 
@@ -18,7 +17,7 @@ pub const SIZE: u32 = 32;
 impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
     fn get(&self, cid: &Cid) -> Result<Option<Vec<u8>>> {
         // If this fails, the _CID_ is invalid. I.e., we have a bug.
-        sdk::ipld::get(cid)
+        fvm_sdk::ipld::get(cid)
             .map(Some)
             .map_err(|e| InvalidCid(e, *cid).into())
     }
@@ -36,7 +35,7 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
     where
         D: AsRef<[u8]>,
     {
-        let k = sdk::ipld::put(code.into(), SIZE, block.codec, block.data.as_ref())
+        let k = fvm_sdk::ipld::put(code.into(), SIZE, block.codec, block.data.as_ref())
             .map_err(PutFailed)?;
         Ok(k)
     }
