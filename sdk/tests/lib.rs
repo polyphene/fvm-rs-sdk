@@ -13,5 +13,7 @@ fn mock() {
         pub count: u64,
     }
 
-    assert!(false)
+    let mock = Mock { count: 0 };
+
+    assert_eq!(mock.count, 0);
 }
