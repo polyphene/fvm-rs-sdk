@@ -6,7 +6,7 @@ use cid::Cid;
 use fvm_ipld_blockstore::Block;
 use fvm_sdk as sdk;
 
-use crate::state::error::Error::{InvalidCid, NonMatchingCid, PutFailed};
+use crate::state::error::Error::{InvalidCid, MismatchedCid, PutFailed};
 
 /// A blockstore that delegates to IPLD syscalls.
 pub struct CborBlockstore;
@@ -27,7 +27,7 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         let code = Code::try_from(k.hash().code()).map_err(|e| anyhow!(e.to_string()))?;
         let k2 = self.put(code, &Block::new(k.codec(), block))?;
         if k != &k2 {
-            return Err(NonMatchingCid(*k, k2).into());
+            return Err(MismatchedCid(*k, k2).into());
         }
         Ok(())
     }
@@ -37,7 +37,7 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         D: AsRef<[u8]>,
     {
         let k = sdk::ipld::put(code.into(), SIZE, block.codec, block.data.as_ref())
-            .map_err(|e| PutFailed(e).into())?;
+            .map_err(PutFailed)?;
         Ok(k)
     }
 }

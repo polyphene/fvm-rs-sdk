@@ -23,7 +23,7 @@ impl TryToTokens for ast::Program {
     // Generate wrappers for all the items that we've found
     fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
         // Handling tagged structures
-        for s in self.structs.iter() {
+        for s in self.state_structs.iter() {
             s.to_tokens(into);
         }
 
@@ -31,7 +31,7 @@ impl TryToTokens for ast::Program {
     }
 }
 
-impl ToTokens for ast::Struct {
+impl ToTokens for ast::StateStruct {
     fn to_tokens(&self, into: &mut TokenStream) {
         // Add derive for serialize & deserialize
         *into = (quote! {
@@ -46,6 +46,7 @@ impl ToTokens for ast::Struct {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::attrs::Codec::DagCbor;
 
     #[test]
     fn basic_struct() {
@@ -87,7 +88,7 @@ mod tests {
                         _ => unreachable!(),
                     };
 
-                    fields.push(ast::StructField {
+                    fields.push(ast::StateStructField {
                         rust_name: member,
                         name,
                         struct_name: s.ident.clone(),
@@ -95,15 +96,16 @@ mod tests {
                     });
                 }
 
-                let ast_struct = ast::Struct {
+                let ast_struct = ast::StateStruct {
                     rust_name: s.ident.clone(),
                     name: s.ident.to_string(),
                     fields,
+                    codec: DagCbor,
                 };
 
                 // Create ast::Program
                 let program = ast::Program {
-                    structs: vec![ast_struct],
+                    state_structs: vec![ast_struct],
                 };
 
                 program.try_to_tokens(&mut token_stream).unwrap();
