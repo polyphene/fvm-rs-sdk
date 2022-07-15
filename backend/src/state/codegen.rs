@@ -58,7 +58,6 @@ mod tests {
         (quote! {
             #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
             #[serde( crate = "fvm_rs_sdk::serde")]
-
             pub struct MockStruct {
                 pub count: u64
             }
@@ -79,7 +78,7 @@ mod tests {
                     // Get state's bytes
                     match fvm_rs_sdk::state::cbor::CborBlockstore.get(&root) {
                         // State fetched, convert byte to actual struct
-                        Ok(Some(state_bytes)) => match fvm_rs_sdk::encoding::from_slice(&state) {
+                        Ok(Some(state_bytes)) => match fvm_rs_sdk::encoding::from_slice(&state_bytes) {
                             Ok(state) => state,
                             Err(err) => fvm_rs_sdk::syscall::vm::abort(
                                 fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
@@ -112,7 +111,6 @@ mod tests {
                     };
 
                     // Put state
-                    let cid = fvm_rs_sdk::state::cbor::CborBlockstore.put(fvm_rs_sdk::cid::Code::Blake2b256.into())
                     let cid = match fvm_rs_sdk::state::cbor::CborBlockstore.put(
                         fvm_rs_sdk::cid::Code::Blake2b256.into(),
                         &fvm_rs_sdk::state::Block {

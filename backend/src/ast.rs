@@ -37,7 +37,6 @@ impl StateStruct {
                 quote!(
                     impl fvm_rs_sdk::state::StateObject for #name {
                         fn load() -> Self {
-                            use fvm_rs_sdk::serde;
                             use fvm_rs_sdk::state::Blockstore;
 
                             // First, load the current state root.
@@ -73,7 +72,6 @@ impl StateStruct {
                         }
 
                         fn save(&self) -> fvm_rs_sdk::cid::Cid {
-                            use fvm_rs_sdk::serde;
                             use fvm_rs_sdk::state::Blockstore;
 
                             // Serialize state
