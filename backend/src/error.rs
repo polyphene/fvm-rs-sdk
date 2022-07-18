@@ -226,7 +226,7 @@ mod tests {
                 }
                 _ => panic!("diagnostic should be of type Multi with non-empty vector"),
             },
-            _ => panic!("result should be an error with vector non empty"),
+            _ => panic!("result should be an error with non-empty vector"),
         }
     }
 
