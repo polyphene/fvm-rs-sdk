@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use cid::multihash::Code;
 use cid::Cid;
 use fvm_ipld_blockstore::Block;
+use fvm_ipld_encoding::CborStore;
 
 use crate::state::error::Error::{InvalidCid, MismatchedCid, PutFailed};
 
@@ -40,3 +41,5 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         Ok(k)
     }
 }
+
+impl CborStore for CborBlockstore {}

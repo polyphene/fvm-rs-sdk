@@ -37,7 +37,7 @@ impl StateStruct {
                 quote!(
                     impl fvm_rs_sdk::state::StateObject for #name {
                         fn load() -> Self {
-                            use fvm_rs_sdk::state::Blockstore;
+                            use fvm_ipld_encoding::CborStore;
 
                             // First, load the current state root.
                             let root = match fvm_rs_sdk::syscall::sself::root() {
@@ -49,21 +49,12 @@ impl StateStruct {
                             };
 
                             // Get state's bytes
-                            match fvm_rs_sdk::state::cbor::CborBlockstore.get(&root) {
-                                // State fetched, convert byte to actual struct
-                                Ok(Some(state_bytes)) => match fvm_rs_sdk::encoding::from_slice(&state_bytes) {
-                                    Ok(state) => state,
-                                    Err(err) => fvm_rs_sdk::syscall::vm::abort(
-                                        fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                                        Some(format!("failed to deserialize state: {}", err).as_str()),
-                                    )
-                                },
-                                // No state
+                            match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor(&root) {
+                                Ok(Some(state)) => state,
                                 Ok(None) => fvm_rs_sdk::syscall::vm::abort(
                                     fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
                                     Some("state does not exist"),
                                 ),
-                                // Fetching failed
                                 Err(err) => fvm_rs_sdk::syscall::vm::abort(
                                     fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
                                     Some(format!("failed to get state: {}", err).as_str()),
@@ -72,31 +63,18 @@ impl StateStruct {
                         }
 
                         fn save(&self) -> fvm_rs_sdk::cid::Cid {
-                            use fvm_rs_sdk::state::Blockstore;
+                            use fvm_ipld_encoding::CborStore;
 
-                            // Serialize state
-                            let serialized = match fvm_rs_sdk::encoding::to_vec(self) {
-                                Ok(s) => s,
-                                Err(err) => fvm_rs_sdk::syscall::vm::abort(
-                                    fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                                    Some(format!("failed to serialize state: {:?}", err).as_str()),
-                                ),
-                            };
-
-                            // Put state
-                            let cid = match fvm_rs_sdk::state::cbor::CborBlockstore.put(
-                                fvm_rs_sdk::cid::Code::Blake2b256.into(),
-                                &fvm_rs_sdk::state::Block {
-                                    codec: fvm_rs_sdk::encoding::DAG_CBOR,
-                                    data: serialized.as_slice()
-                                }
-                            ) {
+                            match fvm_rs_sdk::state::cbor::CborBlockstore
+                                .put_cbor(self, fvm_rs_sdk::cid::Code::Blake2b256.into())
+                            {
                                 Ok(cid) => cid,
                                 Err(err) => fvm_rs_sdk::syscall::vm::abort(
                                     fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                                    Some(format!("failed to store initial state: {:}", err).as_str()),
+                                    Some(format!("failed to store state: {:}", err).as_str()),
                                 ),
-                            };
+                            }
+
                             if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
                                 fvm_rs_sdk::syscall::vm::abort(
                                     fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
