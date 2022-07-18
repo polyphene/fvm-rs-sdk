@@ -224,7 +224,7 @@ mod tests {
                 Repr::Multi { diagnostics } => {
                     assert_eq!(diagnostics.len(), 2usize);
                 }
-                _ => panic!("diagnostic should be of type Multi with vector non empty"),
+                _ => panic!("diagnostic should be of type Multi with non-empty vector"),
             },
             _ => panic!("result should be an error with vector non empty"),
         }
