@@ -41,5 +41,3 @@ impl fvm_ipld_blockstore::Blockstore for CborBlockstore {
         Ok(k)
     }
 }
-
-impl CborStore for CborBlockstore {}

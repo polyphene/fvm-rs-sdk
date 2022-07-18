@@ -37,7 +37,7 @@ impl StateStruct {
                 quote!(
                     impl fvm_rs_sdk::state::StateObject for #name {
                         fn load() -> Self {
-                            use fvm_ipld_encoding::CborStore;
+                            use fvm_rs_sdk::encoding::CborStore;
 
                             // First, load the current state root.
                             let root = match fvm_rs_sdk::syscall::sself::root() {
@@ -63,7 +63,7 @@ impl StateStruct {
                         }
 
                         fn save(&self) -> fvm_rs_sdk::cid::Cid {
-                            use fvm_ipld_encoding::CborStore;
+                            use fvm_rs_sdk::encoding::CborStore;
 
                             match fvm_rs_sdk::state::cbor::CborBlockstore
                                 .put_cbor(self, fvm_rs_sdk::cid::Code::Blake2b256.into())
