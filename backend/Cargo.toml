@@ -3,7 +3,7 @@ name = "fvm_rs_sdk_backend"
 version = "0.0.1"
 authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
 edition = "2018"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 description = "Backend crate for the Filecoin Virtual Macro Rust SDK procedural macro."
 homepage = "http://fvm.filecoin.io"
 keywords = ["fvm", "sdk"]
@@ -14,8 +14,6 @@ spans = []
 
 [dependencies]
 cfg-if = "^1.0.0"
-lazy_static = "^1.4.0"
-log = "^0.4.0"
 proc-macro2 = "^1.0.40"
 quote = "^1.0.20"
 syn = { version = "^1.0.98", features = ["full"] }
