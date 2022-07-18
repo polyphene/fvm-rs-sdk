@@ -24,7 +24,7 @@ impl<'a> ConvertToAst for &'a mut syn::ItemStruct {
         if !self.generics.params.is_empty() {
             bail_span!(
                 self.generics,
-                "structs with #[fvm_state] cannot have lifetime or type parameters"
+                "structs with #[fvm_state] cannot have lifetime or type generic parameters"
             );
         }
 
