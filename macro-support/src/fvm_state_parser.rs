@@ -162,14 +162,12 @@ mod tests {
             Err(diagnostic) => {
                 let res_panic = std::panic::catch_unwind(|| diagnostic.panic());
                 match res_panic {
-                    Err(err) => {
-                        match err.downcast::<String>() {
-                            Ok(panic_msg_box) => {
-                                assert_eq!(panic_msg_box.as_str(), "structs with #[fvm_state] cannot have lifetime or type parameters");
-                            }
-                            Err(_) => unreachable!(),
+                    Err(err) => match err.downcast::<String>() {
+                        Ok(panic_msg_box) => {
+                            assert_eq!(panic_msg_box.as_str(), "structs with #[fvm_state] cannot have lifetime or type generic parameters");
                         }
-                    }
+                        Err(_) => unreachable!(),
+                    },
                     _ => unreachable!(),
                 }
             }
