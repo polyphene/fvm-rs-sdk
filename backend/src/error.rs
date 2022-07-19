@@ -143,6 +143,22 @@ mod tests {
         assert_eq!(expected_type, std::any::type_name::<T>())
     }
 
+    fn assert_span(diagnostic: Diagnostic) {
+        match diagnostic.inner {
+            Repr::Single { text, span } => {
+                assert_eq!(text, String::from("error"));
+                match span {
+                    Some((start, end)) => {
+                        assert_type_of(&start, "proc_macro2::Span");
+                        assert_type_of(&end, "proc_macro2::Span");
+                    }
+                    _ => panic!("span should not be None"),
+                }
+            }
+            _ => panic!("diagnostic inner should be single"),
+        }
+    }
+
     #[test]
     fn generate_error_with_message() {
         let diagnostic = Diagnostic::error("error");
@@ -163,19 +179,7 @@ mod tests {
 
         let diagnostic = Diagnostic::span_error(mock_ident_span, "error");
 
-        match diagnostic.inner {
-            Repr::Single { text, span } => {
-                assert_eq!(text, String::from("error"));
-                match span {
-                    Some((start, end)) => {
-                        assert_type_of(&start, "proc_macro2::Span");
-                        assert_type_of(&end, "proc_macro2::Span");
-                    }
-                    _ => panic!("span should not be None"),
-                }
-            }
-            _ => panic!("diagnostic inner should be single"),
-        }
+        assert_span(diagnostic);
     }
 
     #[test]
@@ -194,19 +198,7 @@ mod tests {
     fn span_error_from_token() {
         let diagnostic = Diagnostic::spanned_error(&"string", "error");
 
-        match diagnostic.inner {
-            Repr::Single { text, span } => {
-                assert_eq!(text, String::from("error"));
-                match span {
-                    Some((start, end)) => {
-                        assert_type_of(&start, "proc_macro2::Span");
-                        assert_type_of(&end, "proc_macro2::Span");
-                    }
-                    _ => panic!("span should not be None"),
-                }
-            }
-            _ => panic!("diagnostic inner should be single"),
-        }
+        assert_span(diagnostic);
     }
 
     #[test]
@@ -224,9 +216,9 @@ mod tests {
                 Repr::Multi { diagnostics } => {
                     assert_eq!(diagnostics.len(), 2usize);
                 }
-                _ => panic!("diagnostic should be of type Multi with vector non empty"),
+                _ => panic!("diagnostic should be of type Multi with non-empty vector"),
             },
-            _ => panic!("result should be an error with vector non empty"),
+            _ => panic!("result should be an error with non-empty vector"),
         }
     }
 
