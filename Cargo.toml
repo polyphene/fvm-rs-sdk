@@ -1,15 +1,8 @@
-[package]
-name = "fvm-rs-sdk"
-version = "0.0.1"
-authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
-edition = "2018"
-license = "MIT"
-description = "This crate provides an interface for developers to build actors to deploy on the Filecoin chain."
-readme = "README.md"
-homepage = "http://fvm.filecoin.io"
-keywords = ["fvm", "sdk"]
-categories = ["api-bindings"]
-
-[dependencies]
-fvm_shared = "0.8.0"
-fvm_sdk = { version = "^1.0.0", features = ["testing"] }
+[workspace]
+resolver = "2"
+members = [
+    "sdk",
+    "macro",
+    "backend",
+    "macro-support"
+]
