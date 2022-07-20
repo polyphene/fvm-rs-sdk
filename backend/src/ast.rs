@@ -74,14 +74,6 @@ impl StateStruct {
                                     Some(format!("failed to store state: {:}", err).as_str()),
                                 ),
                             }
-
-                            if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
-                                fvm_rs_sdk::syscall::vm::abort(
-                                    fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
-                                    Some(format!("failed to set root cid: {:}", err).as_str()),
-                                );
-                            }
-                            cid
                         }
                     }
                 )

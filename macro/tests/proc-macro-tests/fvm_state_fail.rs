@@ -1,6 +1,7 @@
 #![allow(unreachable_code)]
-use fvm_rs_sdk::state::fvm_state;
+use fvm_rs_sdk::state::*;
 
+#[fvm_state]
 pub struct MockStruct1<'a> {
     pub count: &'a u64,
 }
