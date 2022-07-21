@@ -20,8 +20,8 @@ jobs:
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
+          toolchain: stable
           profile: minimal
-          override: true
           components: rustfmt
       - name: Running fmt
         uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
@@ -61,8 +61,8 @@ jobs:
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
+          toolchain: stable
           profile: minimal
-          override: true
           components: ${{ matrix.components }}
       - name: Running ${{ matrix.command }}
         uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
