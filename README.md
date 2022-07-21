@@ -43,14 +43,14 @@ git submodule update
  
 ### Build an actor using the SDK
 
-To build an actor using the SDK you can follow the example of the `sdk_example_actor` crate in `./sdk/tests/sdk-example-actor`.
+To build an actor using the SDK you can follow the example of the `sdk_example_actor` crate in `./examples/sdk-example-actor`.
 Once your actor's crate is ready just run:
 ```bash
 cargo build
 ```
 
 Using `wasm-builder` in your `build.rs` file will compile the crate in a wasm file that can be found at the path 
-`./target/debug/wbuild/<crate-name>/<crate-name>.compact.wasm`.
+`./examples/<crate-folder>/target/debug/wbuild/<crate-name>/<crate-name>.compact.wasm`.
 
 ### Test your actor
 
