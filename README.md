@@ -42,7 +42,7 @@ git submodule update
  
 ### Build an actor using the SDK
 
-To build an actor using the SDK you can take example on the `sdk_example_actor` crate in `./sdk/tests/sdk-example-actor`.
+To build an actor using the SDK you can follow the example of the `sdk_example_actor` crate in `./sdk/tests/sdk-example-actor`.
 Once your actor's crate is ready just run:
 ```bash
 cargo build
