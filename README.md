@@ -58,7 +58,7 @@ on a local lotus network.
 
 #### Integration test framework
 
-Create a new test in the `fvm_integration_tests` crate and use the path of compiled wasm file to retrieve its byte content.
+Create a new test in the `fvm_integration_tests` crate and use the path of the compiled wasm file to retrieve its binary content.
 You will then be able to interact with it. Example of such tests can be found in `<ref-fvm-repository>/testing/integation/tests`.
 
 #### Lotus local network
