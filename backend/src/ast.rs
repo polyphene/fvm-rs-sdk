@@ -84,7 +84,7 @@ impl StateStruct {
                             if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
                                 fvm_rs_sdk::syscall::vm::abort(
                                     fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
-                                    Some(format!("failed to set root ciid: {:}", err).as_str()),
+                                    Some(format!("failed to set root cid: {:}", err).as_str()),
                                 );
                             }
                             cid
