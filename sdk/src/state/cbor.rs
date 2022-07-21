@@ -10,7 +10,7 @@ use crate::state::error::Error::{InvalidCid, MismatchedCid, PutFailed};
 /// A blockstore that delegates to IPLD syscalls.
 pub struct CborBlockstore;
 
-// TODO: Don't hard-code the size. Unfortunately, there's no good way to get it from the
+// TODO: Don't hard-code the hash size. Unfortunately, there's no good way to get it from the
 //  codec at the moment.
 pub const SIZE: u32 = 32;
 

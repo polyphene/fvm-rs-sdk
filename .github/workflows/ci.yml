@@ -14,8 +14,10 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - name: Checking out sdk
+      - name: Checkout repository and submodules
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
@@ -53,10 +55,10 @@ jobs:
       CARGO_TERM_COLOR: always
     name: ${{matrix.os}} - ${{ matrix.name }}
     steps:
-      - name: Checking out sdk
+      - name: Checkout repository and submodules
         uses: actions/checkout@v2
         with:
-          submodules: ${{ matrix.submodules }}
+          submodules: recursive
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
