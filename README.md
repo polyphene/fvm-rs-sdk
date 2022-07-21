@@ -48,7 +48,7 @@ Once your actor's crate is ready just run:
 cargo build
 ```
 
-Using `wasm-builder` in your `build.rs` file will compile the crate in a wasm file that can be found in the path 
+Using `wasm-builder` in your `build.rs` file will compile the crate in a wasm file that can be found at the path 
 `./target/debug/wbuild/<crate-name>/<crate-name>.compact.wasm`.
 
 ### Test your actor
