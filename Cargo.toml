@@ -7,6 +7,10 @@ members = [
     "macro-support"
 ]
 
+exclude = [
+    "examples/sdk-example-actor"
+]
+
 [patch.crates-io]
 fvm_ipld_encoding = { path = "./ref-fvm/ipld/encoding" }
 fvm_shared = { path = "./ref-fvm/shared" }
