@@ -26,9 +26,10 @@ Here is a quick description of what you will be able to find in every directory:
 
 ### Limitations 
 
-As of now some references to `ref-fvm` are done through [cargo patches]() to ease the development of the SDK. This 
-reference makes the SDK harder to use and to test through integration in a Filecoin Virtual Machine. However, the final
-version will be simply a line in your dependencies so please bear with us until then!
+As of now some references to `ref-fvm` are done through [cargo patches](https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html)
+to ease the development of the SDK. This reference makes the SDK harder to use and to test through integration in a 
+Filecoin Virtual Machine. However, the final version will be simply a line in your dependencies so please bear with us
+until then!
 
 ### Pre-requirements
 
