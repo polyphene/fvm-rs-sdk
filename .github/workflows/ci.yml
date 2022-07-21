@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checking out sdk
         uses: actions/checkout@v2
+      - name: Checkout submodules
+        uses: textbook/git-checkout-submodule-action@master
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
@@ -55,8 +57,8 @@ jobs:
     steps:
       - name: Checking out sdk
         uses: actions/checkout@v2
-        with:
-          submodules: ${{ matrix.submodules }}
+      - name: Checkout submodules
+        uses: textbook/git-checkout-submodule-action@master
       - name: Installing Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1.0.7
         with:
