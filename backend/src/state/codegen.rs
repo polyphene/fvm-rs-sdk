@@ -65,7 +65,6 @@ mod tests {
             impl fvm_rs_sdk::state::StateObject for MockStruct {
                 fn load() -> Self {
                     use fvm_rs_sdk::encoding::CborStore;
-
                     // First, load the current state root.
                     let root = match fvm_rs_sdk::syscall::sself::root() {
                         Ok(root) => root,
@@ -75,8 +74,8 @@ mod tests {
                         ),
                     };
 
-                    // Get state's bytes
-                    match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor(&root) {
+                    // Load the actor state from the state tree.
+                    match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor::<Self>(&root) {
                         Ok(Some(state)) => state,
                         Ok(None) => fvm_rs_sdk::syscall::vm::abort(
                             fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
@@ -90,17 +89,32 @@ mod tests {
                 }
 
                 fn save(&self) -> fvm_rs_sdk::cid::Cid {
-                    use fvm_rs_sdk::encoding::CborStore;
-
-                    match fvm_rs_sdk::state::cbor::CborBlockstore
-                        .put_cbor(self, fvm_rs_sdk::cid::Code::Blake2b256.into())
-                    {
+                    let serialized = match fvm_rs_sdk::encoding::to_vec(self) {
+                        Ok(s) => s,
+                        Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
+                            Some(format!("failed to serialize state: {:?}", err).as_str()),
+                        ),
+                    };
+                    let cid = match fvm_rs_sdk::syscall::ipld::put(
+                        fvm_rs_sdk::cid::Code::Blake2b256.into(),
+                        32,
+                        fvm_rs_sdk::encoding::DAG_CBOR,
+                        serialized.as_slice(),
+                    ) {
                         Ok(cid) => cid,
                         Err(err) => fvm_rs_sdk::syscall::vm::abort(
                             fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                            Some(format!("failed to store state: {:}", err).as_str()),
+                            Some(format!("failed to store initial state: {:}", err).as_str()),
                         ),
+                    };
+                    if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
+                        fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                            Some(format!("failed to set root ciid: {:}", err).as_str()),
+                        );
                     }
+                    cid
                 }
             }
         })

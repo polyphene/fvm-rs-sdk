@@ -1,7 +1,8 @@
 use fvm_rs_sdk::encoding::{to_vec, RawBytes, DAG_CBOR};
 use fvm_rs_sdk::shared::error::ExitCode;
-use fvm_rs_sdk::state::*;
 use fvm_rs_sdk::syscall::{message::params_raw, vm::abort, NO_DATA_BLOCK_ID};
+
+use fvm_rs_sdk::state::*;
 
 #[derive(Clone, Debug, Default)]
 #[fvm_state]
