@@ -1,5 +1,5 @@
 #![allow(unreachable_code)]
-use fvm_rs_sdk::*;
+use fvm_rs_sdk::state::*;
 
 #[fvm_state]
 pub struct MockStruct1<'a> {

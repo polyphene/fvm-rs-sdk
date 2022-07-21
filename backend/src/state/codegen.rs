@@ -23,7 +23,7 @@ impl TryToTokens for ast::Program {
     // Generate wrappers for all the items that we've found
     fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
         // Handling tagged structures
-        for s in self.structs.iter() {
+        for s in self.state_structs.iter() {
             s.to_tokens(into);
         }
 
@@ -31,21 +31,24 @@ impl TryToTokens for ast::Program {
     }
 }
 
-impl ToTokens for ast::Struct {
+impl ToTokens for ast::StateStruct {
     fn to_tokens(&self, into: &mut TokenStream) {
         // Add derive for serialize & deserialize
         *into = (quote! {
-            #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
-            #[serde( crate = "fvm_rs_sdk::serde")]
+            #[derive(fvm_rs_sdk::encoding::tuple::Serialize_tuple, fvm_rs_sdk::encoding::tuple::Deserialize_tuple)]
+            #[serde( crate = "fvm_rs_sdk::encoding::serde")]
             #into
         })
             .to_token_stream();
+
+        self.generate_state_interface().to_tokens(into)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::attrs::Codec::DagCbor;
 
     #[test]
     fn basic_struct() {
@@ -53,11 +56,52 @@ mod tests {
         let mut expected_final_stream = TokenStream::new();
 
         (quote! {
-            #[derive(fvm_rs_sdk::serde_tuple::Serialize_tuple, fvm_rs_sdk::serde_tuple::Deserialize_tuple)]
-            #[serde( crate = "fvm_rs_sdk::serde")]
-
+            #[derive(fvm_rs_sdk::encoding::tuple::Serialize_tuple, fvm_rs_sdk::encoding::tuple::Deserialize_tuple)]
+            #[serde( crate = "fvm_rs_sdk::encoding::serde")]
             pub struct MockStruct {
                 pub count: u64
+            }
+
+            impl fvm_rs_sdk::state::StateObject for MockStruct {
+                fn load() -> Self {
+                    use fvm_rs_sdk::encoding::CborStore;
+
+                    // First, load the current state root.
+                    let root = match fvm_rs_sdk::syscall::sself::root() {
+                        Ok(root) => root,
+                        Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                            Some(format!("failed to get root: {:?}", err).as_str()),
+                        ),
+                    };
+
+                    // Get state's bytes
+                    match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor(&root) {
+                        Ok(Some(state)) => state,
+                        Ok(None) => fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                            Some("state does not exist"),
+                        ),
+                        Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                            Some(format!("failed to get state: {}", err).as_str()),
+                        ),
+                    }
+                }
+
+                fn save(&self) -> fvm_rs_sdk::cid::Cid {
+                    use fvm_rs_sdk::encoding::CborStore;
+
+                    match fvm_rs_sdk::state::cbor::CborBlockstore
+                        .put_cbor(self, fvm_rs_sdk::cid::Code::Blake2b256.into())
+                    {
+                        Ok(cid) => cid,
+                        Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                            fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
+                            Some(format!("failed to store state: {:}", err).as_str()),
+                        ),
+                    }
+                }
             }
         })
             .to_tokens(&mut expected_final_stream);
@@ -87,7 +131,7 @@ mod tests {
                         _ => unreachable!(),
                     };
 
-                    fields.push(ast::StructField {
+                    fields.push(ast::StateStructField {
                         rust_name: member,
                         name,
                         struct_name: s.ident.clone(),
@@ -95,15 +139,16 @@ mod tests {
                     });
                 }
 
-                let ast_struct = ast::Struct {
+                let ast_struct = ast::StateStruct {
                     rust_name: s.ident.clone(),
                     name: s.ident.to_string(),
                     fields,
+                    codec: DagCbor,
                 };
 
                 // Create ast::Program
                 let program = ast::Program {
-                    structs: vec![ast_struct],
+                    state_structs: vec![ast_struct],
                 };
 
                 program.try_to_tokens(&mut token_stream).unwrap();
