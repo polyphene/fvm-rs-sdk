@@ -57,14 +57,14 @@ mod tests {
 
         (quote! {
             #[derive(fvm_rs_sdk::encoding::tuple::Serialize_tuple, fvm_rs_sdk::encoding::tuple::Deserialize_tuple)]
-            #[serde( crate = "fvm_rs_sdk::serde")]
+            #[serde( crate = "fvm_rs_sdk::encoding::serde")]
             pub struct MockStruct {
                 pub count: u64
             }
 
             impl fvm_rs_sdk::state::StateObject for MockStruct {
                 fn load() -> Self {
-                    use fvm_rs_sdk::state::Blockstore;
+                    use fvm_rs_sdk::encoding::CborStore;
 
                     // First, load the current state root.
                     let root = match fvm_rs_sdk::syscall::sself::root() {
@@ -76,21 +76,12 @@ mod tests {
                     };
 
                     // Get state's bytes
-                    match fvm_rs_sdk::state::cbor::CborBlockstore.get(&root) {
-                        // State fetched, convert byte to actual struct
-                        Ok(Some(state_bytes)) => match fvm_rs_sdk::encoding::from_slice(&state_bytes) {
-                            Ok(state) => state,
-                            Err(err) => fvm_rs_sdk::syscall::vm::abort(
-                                fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                                Some(format!("failed to deserialize state: {}", err).as_str()),
-                            )
-                        },
-                        // No state
+                    match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor(&root) {
+                        Ok(Some(state)) => state,
                         Ok(None) => fvm_rs_sdk::syscall::vm::abort(
                             fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
                             Some("state does not exist"),
                         ),
-                        // Fetching failed
                         Err(err) => fvm_rs_sdk::syscall::vm::abort(
                             fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
                             Some(format!("failed to get state: {}", err).as_str()),
@@ -99,38 +90,17 @@ mod tests {
                 }
 
                 fn save(&self) -> fvm_rs_sdk::cid::Cid {
-                    use fvm_rs_sdk::state::Blockstore;
+                    use fvm_rs_sdk::encoding::CborStore;
 
-                    // Serialize state
-                    let serialized = match fvm_rs_sdk::encoding::to_vec(self) {
-                        Ok(s) => s,
-                        Err(err) => fvm_rs_sdk::syscall::vm::abort(
-                            fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                            Some(format!("failed to serialize state: {:?}", err).as_str()),
-                        ),
-                    };
-
-                    // Put state
-                    let cid = match fvm_rs_sdk::state::cbor::CborBlockstore.put(
-                        fvm_rs_sdk::cid::Code::Blake2b256.into(),
-                        &fvm_rs_sdk::state::Block {
-                            codec: fvm_rs_sdk::encoding::DAG_CBOR,
-                            data: serialized.as_slice()
-                        }
-                    ) {
+                    match fvm_rs_sdk::state::cbor::CborBlockstore
+                        .put_cbor(self, fvm_rs_sdk::cid::Code::Blake2b256.into())
+                    {
                         Ok(cid) => cid,
                         Err(err) => fvm_rs_sdk::syscall::vm::abort(
                             fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
-                            Some(format!("failed to store initial state: {:}", err).as_str()),
+                            Some(format!("failed to store state: {:}", err).as_str()),
                         ),
-                    };
-                    if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
-                        fvm_rs_sdk::syscall::vm::abort(
-                            fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
-                            Some(format!("failed to set root cid: {:}", err).as_str()),
-                        );
                     }
-                    cid
                 }
             }
         })
