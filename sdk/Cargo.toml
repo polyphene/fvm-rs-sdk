@@ -19,3 +19,6 @@ fvm_shared = "^0.8.0"
 fvm_sdk = { version = "^1.0.0", features = ["testing"] }
 fvm_rs_sdk_macro = { path = "../macro", version = "0.0.1" }
 thiserror = "^1.0.31"
+
+[dev-dependencies]
+sdk_example_actor = { path="./tests/sdk-example-actor" }
