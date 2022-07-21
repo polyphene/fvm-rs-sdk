@@ -22,6 +22,30 @@ Here is a quick description of what you will be able to find in every directory:
     - Structures used to represent the actor's code can be found in the `ast` module.
     - Each procedural macro have its own generation logic in their dedicated module (e.g. `state` for `fvm_state`).
 
+## Usage
+
+### Limitations 
+
+As of now some reference to `ref-fvm` are done through [cargo patches]() to ease the development of the SDK. This 
+references makes the SDK harder to use and to test through integration in a Filecoin Virtual Machine. However, the final
+version will be simply a line in your dependencies so please bear with us until then!
+
+### Pre-requirements
+
+Before using the SDK, please make sure to initialize and update the `ref-fvm` submodule.
+
+```bash
+git submodule init
+git submodule update
+```
+ 
+### Build an actor using the SDK
+
+To build an actor using the SDK you can take example on the `sdk_example_actor` crate in `./sdk/tests/sdk-example-actor`.
+
+Using `wasm-builder` in your `build.rs` file will compile the crate in a wasm file the can be found in the path 
+`./target/debug/`
+
 ## License
 
 Dual-licensed: [MIT](./LICENSE-MIT), [Apache Software License v2](./LICENSE-APACHE), by way of the
