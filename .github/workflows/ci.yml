@@ -1,11 +1,11 @@
 name: Continuous integration
 
 on:
-  pull_request_review:
+  pull_request:
+    types: [ review_requested ]
     branches:
       - main
       - develop
-    types: [ submitted, edited ]
 
 
 env:
