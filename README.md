@@ -72,6 +72,21 @@ the CID representing the bytecode of the actor.
 at which the actor is instantiated.
 4. Invoke any function from your actor, `lotus chain invoke <address> <method-num>`
 
+## Procedural Macros
+
+### `fvm_state`
+
+To import in your actor everything needed by the procedural macro it is recommended to use the whole `state` module:
+```rust
+use fvm_rs_sdk::state::*;
+```
+
+There are two things to know while using this procedural macro:
+- The procedural macro does not work on structure with lifetime or generic parameters to prevent problems around Serialization
+and Deserialization.
+- When using the macro on a structure, fields that are not public will not be stored in the state.
+
+
 ## License
 
 Dual-licensed: [MIT](./LICENSE-MIT), [Apache Software License v2](./LICENSE-APACHE), by way of the
