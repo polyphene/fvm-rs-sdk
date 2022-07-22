@@ -6,3 +6,7 @@ pub mod cid {
     pub use cid::multihash::Code;
     pub use cid::Cid;
 }
+
+pub mod testing {
+    pub use fvm_sdk::{assert, assert_eq, assert_ne};
+}

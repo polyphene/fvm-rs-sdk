@@ -15,3 +15,4 @@ exclude = [
 fvm_ipld_encoding = { path = "./ref-fvm/ipld/encoding" }
 fvm_shared = { path = "./ref-fvm/shared" }
 fvm_ipld_blockstore = { path = "./ref-fvm/ipld/blockstore" }
+fvm_sdk = { path = "./ref-fvm/sdk" }
