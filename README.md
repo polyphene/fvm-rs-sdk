@@ -1,7 +1,7 @@
 # Filecoin Virtual Machine Rust SDK
 
-This repository contains the implementation of a Rust SDK to build actor for the Filecoin Virtual Machine (FVM). It exposes
-useful structures and functions that could be needed by developers while also serving procedural macros to generate
+This repository contains the implementation of a Rust SDK to build actor for the Filecoin Virtual Machine (FVM). It 
+exposes useful structures and functions that could be needed by developers while also serving procedural macros to generate
 glue code for state management and actor's interface definition.
 
 ## Code structure
