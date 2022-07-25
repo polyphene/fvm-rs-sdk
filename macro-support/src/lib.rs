@@ -10,23 +10,47 @@ extern crate fvm_rs_sdk_backend as backend;
 use backend::Diagnostic;
 use proc_macro2::TokenStream;
 
+mod actor;
 mod state;
 
+pub enum MacroType {
+    State,
+    Actor,
+    Export,
+}
+
 /// Takes the parsed input from a `#[fvm_state]` macro and returns the generated bindings
-pub fn expand_state(attr: TokenStream, input: TokenStream) -> Result<TokenStream, Diagnostic> {
+pub fn expand_state(
+    macro_type: MacroType,
+    attr: TokenStream,
+    input: TokenStream,
+) -> Result<TokenStream, Diagnostic> {
     use backend::TryStateToTokens;
 
-    use crate::state::parser::MacroParse;
-
     let item = syn::parse2::<syn::Item>(input)?;
-    let attrs = syn::parse2(attr)?;
 
     let mut tokens = TokenStream::new();
     let mut program = backend::ast::Program::default();
 
     // First step is to parse the `TokenStream` to copy source tokens & generate custom AST structures
     // for the codegen step
-    item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
+    match macro_type {
+        MacroType::State => {
+            use crate::state::parser::MacroParse;
+            let attrs = syn::parse2(attr)?;
+
+            item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
+        }
+        MacroType::Actor => {
+            use crate::actor::parser::MacroParse;
+            let attrs = syn::parse2(attr)?;
+
+            item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
+        }
+        MacroType::Export => {
+            todo!()
+        }
+    }
 
     // Second step is to generate code custom tokens based on custom AST structures & append it to
     // the `TokenStream`

@@ -13,6 +13,8 @@ use crate::state::attrs::Codec;
 pub struct Program {
     /// state rust structs
     pub state_structs: Vec<StateStruct>,
+    /// Actor implementation
+    pub actor_implementation: Vec<ActorImplementation>,
 }
 
 /// Information about a Struct being used as state object
@@ -108,4 +110,12 @@ pub struct StateStructField {
     pub struct_name: Ident,
     /// The type of this field
     pub ty: syn::Type,
+}
+
+/// Information about a Struct being used as state object
+#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[derive(Clone)]
+pub struct ActorImplementation {
+    /// The name of the implementation for the SDK
+    pub name: String,
 }
