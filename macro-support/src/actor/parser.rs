@@ -1,6 +1,6 @@
 //! Parser reads a source `TokenStream` to prepare the backend to generate custom code
 
-use backend::state::attrs::Codec;
+use backend::actor::attrs::Dispatch;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
@@ -23,42 +23,24 @@ trait ConvertToAst<Ctx> {
 impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
     type Target = ast::ActorImplementation;
 
-    fn convert(self, _attrs: ActorAttrs) -> Result<Self::Target, Diagnostic> {
+    fn convert(self, attrs: ActorAttrs) -> Result<Self::Target, Diagnostic> {
         // Generate the AST object for the Struct
         for item in &self.items {
             match item {
-                ImplItem::Const(c) => {
-                    let mut const_stream = TokenStream::new();
-                    c.to_tokens(&mut const_stream);
-                    dbg!(const_stream.to_string());
+                ImplItem::Method(_m) => {
+                    // TODO Should parse #[fvm_export] here
                 }
-                ImplItem::Method(m) => {
-                    let mut method_stream = TokenStream::new();
-                    m.to_tokens(&mut method_stream);
-                    dbg!(method_stream.to_string());
-                }
-                ImplItem::Type(t) => {
-                    let mut type_stream = TokenStream::new();
-                    t.to_tokens(&mut type_stream);
-                    dbg!(type_stream.to_string());
-                }
-                ImplItem::Macro(m) => {
-                    let mut macro_stream = TokenStream::new();
-                    m.to_tokens(&mut macro_stream);
-                    dbg!(macro_stream.to_string());
-                }
-                ImplItem::Verbatim(v) => {
-                    let mut verba_stream = TokenStream::new();
-                    v.to_tokens(&mut verba_stream);
-                    dbg!(verba_stream.to_string());
-                }
-                _ => unreachable!(),
+                _ => {}
             }
         }
 
-        Ok(ast::ActorImplementation {
-            name: String::from("hello"),
-        })
+        // Attrs assignment
+        let dispatch = match attrs.dispatch() {
+            Some(dispatch) => dispatch.clone(),
+            None => Dispatch::default(),
+        };
+
+        Ok(ast::ActorImplementation { dispatch })
     }
 }
 
@@ -82,7 +64,6 @@ impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
                 let attrs = attrs.unwrap_or_default();
                 program.actor_implementation.push((&mut i).convert(attrs)?);
                 i.to_tokens(tokens);
-                //dbg!(&tokens.to_string());
             }
             _ => {
                 bail_span!(

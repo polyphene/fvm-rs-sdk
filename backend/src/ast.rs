@@ -1,6 +1,7 @@
 //! Contains all structures that can be parsed from a `TokenStream`. They will be used when generating
 //! code
 
+use crate::actor::attrs::Dispatch;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn;
@@ -116,6 +117,6 @@ pub struct StateStructField {
 #[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
 #[derive(Clone)]
 pub struct ActorImplementation {
-    /// The name of the implementation for the SDK
-    pub name: String,
+    /// The internal dispatch method selected for the actor
+    pub dispatch: Dispatch,
 }

@@ -1,14 +1,9 @@
-use backend::state::attrs::{Codec, StateAttr};
+use crate::utils::{generate_attr_getters, generate_attrs};
+use backend::actor::attrs::{ActorAttr, Dispatch};
 use syn::parse::{Parse, ParseStream, Result};
 
-/// Parsed attributes from a `#[fvm_actor(..)]`.
-#[derive(Debug, Default)]
-pub struct ActorAttrs {}
+// Parsed attributes from a `#[fvm_actor(..)]`.
+generate_attrs!(ActorAttrs, ActorAttr);
 
-impl Parse for ActorAttrs {
-    fn parse(_input: ParseStream) -> Result<Self> {
-        let mut attrs = ActorAttrs::default();
-
-        Ok(attrs)
-    }
-}
+// Generate getters to retrieve attributes values
+generate_attr_getters!(ActorAttrs, [(dispatch, ActorAttr::Dispatch, Dispatch),]);

@@ -12,6 +12,7 @@ use proc_macro2::TokenStream;
 
 mod actor;
 mod state;
+mod utils;
 
 pub enum MacroType {
     State,
