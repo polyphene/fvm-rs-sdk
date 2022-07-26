@@ -1,7 +1,29 @@
+use backend::{ast, Diagnostic};
+
+/// Conversion trait with context.
+///
+/// Used to convert syn tokens into an AST, that we can then use to generate glue code.
+pub(crate) trait ConvertToAst<Ctx> {
+    /// What we are converting to.
+    type Target;
+    /// Convert into our target.
+    ///
+    /// Since this is used in a procedural macro, use panic to fail.
+    fn convert(self, context: Ctx) -> Result<Self::Target, Diagnostic>;
+}
+
+pub(crate) trait MacroParse<Ctx> {
+    /// Parse the contents of an object into our AST, with a context if necessary.
+    ///
+    /// The context is used to have access to the attributes on the procedural macro, and to allow
+    /// writing to the output `TokenStream`.
+    fn macro_parse(self, program: &mut ast::Program, context: Ctx) -> Result<(), Diagnostic>;
+}
+
 macro_rules! generate_attrs {
     ($struct_name:ident, $attrs_enum:path) => {
         #[derive(Debug, Default)]
-        pub struct $struct_name {
+        pub(crate) struct $struct_name {
             pub attrs: Vec<$attrs_enum>,
         }
 

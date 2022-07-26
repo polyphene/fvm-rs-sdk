@@ -1,5 +1,6 @@
 //! Parser reads a source `TokenStream` to prepare the backend to generate custom code
 
+use crate::utils::{ConvertToAst, MacroParse};
 use backend::actor::attrs::Dispatch;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
@@ -8,29 +9,14 @@ use syn::{ImplItem, Item};
 
 use crate::actor::attrs::ActorAttrs;
 
-/// Conversion trait with context.
-///
-/// Used to convert syn tokens into an AST, that we can then use to generate glue code.
-trait ConvertToAst<Ctx> {
-    /// What we are converting to.
-    type Target;
-    /// Convert into our target.
-    ///
-    /// Since this is used in a procedural macro, use panic to fail.
-    fn convert(self, context: Ctx) -> Result<Self::Target, Diagnostic>;
-}
-
 impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
     type Target = ast::ActorImplementation;
 
     fn convert(self, attrs: ActorAttrs) -> Result<Self::Target, Diagnostic> {
         // Generate the AST object for the Struct
         for item in &self.items {
-            match item {
-                ImplItem::Method(_m) => {
-                    // TODO Should parse #[fvm_export] here
-                }
-                _ => {}
+            if let ImplItem::Method(_m) = item {
+                // TODO Should parse #[fvm_export] here
             }
         }
 
@@ -42,14 +28,6 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
 
         Ok(ast::ActorImplementation { dispatch })
     }
-}
-
-pub(crate) trait MacroParse<Ctx> {
-    /// Parse the contents of an object into our AST, with a context if necessary.
-    ///
-    /// The context is used to have access to the attributes on `#[fvm_state]`, and to allow
-    /// writing to the output `TokenStream`.
-    fn macro_parse(self, program: &mut ast::Program, context: Ctx) -> Result<(), Diagnostic>;
 }
 
 impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
@@ -79,9 +57,7 @@ impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
 
 #[cfg(test)]
 mod tests {
-    use backend::state::attrs::Codec;
     use quote::quote;
-    use syn::{Member, Type};
 
     use super::*;
 
@@ -107,7 +83,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();

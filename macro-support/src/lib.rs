@@ -10,6 +10,9 @@ extern crate fvm_rs_sdk_backend as backend;
 use backend::Diagnostic;
 use proc_macro2::TokenStream;
 
+use crate::actor::attrs::ActorAttrs;
+use crate::state::attrs::StateAttrs;
+
 mod actor;
 mod state;
 mod utils;
@@ -26,6 +29,7 @@ pub fn expand_state(
     attr: TokenStream,
     input: TokenStream,
 ) -> Result<TokenStream, Diagnostic> {
+    use crate::utils::MacroParse;
     use backend::TryStateToTokens;
 
     let item = syn::parse2::<syn::Item>(input)?;
@@ -37,14 +41,12 @@ pub fn expand_state(
     // for the codegen step
     match macro_type {
         MacroType::State => {
-            use crate::state::parser::MacroParse;
-            let attrs = syn::parse2(attr)?;
+            let attrs: StateAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
         }
         MacroType::Actor => {
-            use crate::actor::parser::MacroParse;
-            let attrs = syn::parse2(attr)?;
+            let attrs: ActorAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
         }
