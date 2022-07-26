@@ -113,7 +113,7 @@ pub struct StateStructField {
     pub ty: syn::Type,
 }
 
-/// Information about a Struct being used as state object
+/// Information about an Implementation being used as an actor interface
 #[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
 #[derive(Clone)]
 pub struct ActorImplementation {
