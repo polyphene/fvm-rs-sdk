@@ -32,7 +32,7 @@ impl TryFrom<String> for ActorAttr {
 
     fn try_from(attr: String) -> Result<Self, Self::Error> {
         match attr.as_str() {
-            "codec" => Ok(ActorAttr::Dispatch(Dispatch::default())),
+            "dispatch" => Ok(ActorAttr::Dispatch(Dispatch::default())),
             _ => Err(UnknownAttribute(attr)),
         }
     }
