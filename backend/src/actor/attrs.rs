@@ -1,4 +1,4 @@
-//! Contains attributes available for the `#[fvm_state]` procedural macro.
+//! Contains attributes available for the `#[fvm_actor]` procedural macro.
 
 use std::convert::TryFrom;
 
