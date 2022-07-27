@@ -2,25 +2,13 @@
 
 use std::convert::TryFrom;
 
+use crate::utils::AnyIdent;
 use anyhow::Result;
-use proc_macro2::Ident;
 use syn::parse::{Parse, ParseStream, Result as SynResult};
 
 use crate::actor::error::Error::{
     InvalidDispatchMethodFormat, UnknownAttribute, UnkownDispatchMethod,
 };
-
-// AnyIdent is a wrapper around Ident to be able to implement Parse trait
-struct AnyIdent(Ident);
-
-impl Parse for AnyIdent {
-    fn parse(input: ParseStream) -> SynResult<Self> {
-        input.step(|cursor| match cursor.ident() {
-            Some((ident, remaining)) => Ok((AnyIdent(ident), remaining)),
-            None => Err(cursor.error("expected an identifier")),
-        })
-    }
-}
 
 #[derive(Clone, Debug)]
 pub enum ActorAttr {
