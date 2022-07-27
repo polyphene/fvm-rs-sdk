@@ -10,7 +10,7 @@ macro_rules! generate_proc_macro {
     ($assert_macro:ident, $macro_type:expr) => {
         #[proc_macro_attribute]
         pub fn $assert_macro(attr: TokenStream, input: TokenStream) -> TokenStream {
-            match fvm_rs_sdk_macro_support::expand_state($macro_type, attr.into(), input.into()) {
+            match fvm_rs_sdk_macro_support::expand($macro_type, attr.into(), input.into()) {
                 Ok(tokens) => tokens.into(),
                 Err(diagnostic) => (quote! { #diagnostic }).into(),
             }
