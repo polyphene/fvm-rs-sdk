@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 
 use crate::utils::AnyIdent;
 use anyhow::Result;
-use proc_macro2::Ident;
 use syn::parse::{Parse, ParseStream, Result as SynResult};
 
 use crate::export::error::Error::{InvalidBindingValue, InvalidNumericValue, UnknownAttribute};

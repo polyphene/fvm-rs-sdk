@@ -120,6 +120,8 @@ pub struct StateStructField {
 pub struct ActorImplementation {
     /// The internal dispatch method selected for the actor
     pub dispatch: Dispatch,
+    /// The entry points that are available for the actor
+    pub entry_points: Vec<ActorEntryPoint>,
 }
 
 /// Information about an entry point being used in an actor

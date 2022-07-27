@@ -3,11 +3,9 @@
 use crate::utils::{ConvertToAst, MacroParse};
 use backend::actor::attrs::Dispatch;
 use backend::ast::ActorEntryPoint;
-use backend::export::attrs::ExportAttr;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use quote::__private::ext::RepToTokensExt;
 use syn::{Attribute, ImplItem, Item};
 
 use crate::actor::attrs::ActorAttrs;
@@ -23,12 +21,12 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
             None => Dispatch::default(),
         };
 
+        // Initialize entry points
         let mut entry_points: Vec<ActorEntryPoint> = vec![];
-        // Generate the AST object for the Struct
-        for mut item in self.items.iter_mut() {
+
+        for item in &self.items {
             if let ImplItem::Method(mut m) = item.clone() {
-                m.defaultness = None;
-                // Get attrs token stream
+                // Get export token stream
                 let filtered_attributes: Vec<&Attribute> = m
                     .attrs
                     .iter()
@@ -44,17 +42,20 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
                     continue;
                 }
 
+                // Parse export attributes
                 let fvm_export_attr: &Attribute = filtered_attributes[0];
                 let export_attrs: ExportAttrs = fvm_export_attr.parse_args()?;
-                dbg!(&export_attrs);
+
+                // Generate ast entry point
                 let entry_point: ActorEntryPoint = (&mut m).convert((&dispatch, export_attrs))?;
                 entry_points.push(entry_point);
-                dbg!(&entry_points[0].name);
-                // TODO Should parse #[fvm_export] here
             }
         }
 
-        Ok(ast::ActorImplementation { dispatch })
+        Ok(ast::ActorImplementation {
+            dispatch,
+            entry_points,
+        })
     }
 }
 
