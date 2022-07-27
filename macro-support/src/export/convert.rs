@@ -16,10 +16,9 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
         (dispatch, attrs): (&Dispatch, ExportAttrs),
     ) -> Result<Self::Target, Diagnostic> {
         // Get binding value
-        let binding_value: &Binding = attrs.binding().ok_or(Diagnostic::error(format!(
-            "{}",
-            MissingBinding(self.sig.ident.to_string())
-        )))?;
+        let binding_value: &Binding = attrs.binding().ok_or_else(|| {
+            Diagnostic::error(format!("{}", MissingBinding(self.sig.ident.to_string())))
+        })?;
         // Get dispatch method
         match dispatch {
             Dispatch::Numeric => {
@@ -137,12 +136,11 @@ mod tests {
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        match item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            Err(err) => assert_eq!(
-                err.to_token_stream().to_string(),
-                "compile_error ! { \"expected attribute arguments in parentheses: #[fvm_export(...)]\" }"
-            ),
-            _ => {}
+        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+            assert_eq!(
+            err.to_token_stream().to_string(),
+            "compile_error ! { \"expected attribute arguments in parentheses: #[fvm_export(...)]\" }"
+        )
         }
     }
 
@@ -177,12 +175,11 @@ mod tests {
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        match item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            Err(err) => assert_eq!(
+        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+            assert_eq!(
                 err.to_token_stream().to_string(),
                 "compile_error ! { \"invalid binding value\" }"
-            ),
-            _ => {}
+            )
         }
     }
 
@@ -217,12 +214,11 @@ mod tests {
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        match item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            Err(err) => assert_eq!(
+        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+            assert_eq!(
                 err.to_token_stream().to_string(),
                 "compile_error ! { \"unknown attribute 'hello'\" }"
-            ),
-            _ => {}
+            )
         }
     }
 }

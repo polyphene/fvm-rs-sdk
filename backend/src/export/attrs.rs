@@ -34,16 +34,13 @@ impl Parse for ExportAttr {
             Ok(ExportAttr::Binding(_)) => {
                 input.parse::<syn::token::Eq>()?;
                 // Try to get value from parsing an integer
-                match input.parse::<syn::LitInt>() {
-                    Ok(num) => {
-                        return Ok(ExportAttr::Binding(Binding::Numeric(
-                            num.base10_parse::<u64>()
-                                .or(Err(original
-                                    .error(format!("{}", InvalidNumericValue(num.to_string())))))?,
-                        )));
-                    }
-                    _ => {}
-                };
+                if let Ok(num) = input.parse::<syn::LitInt>() {
+                    return Ok(ExportAttr::Binding(Binding::Numeric(
+                        num.base10_parse::<u64>().map_err(|_| {
+                            original.error(format!("{}", InvalidNumericValue(num.to_string())))
+                        })?,
+                    )));
+                }
                 return Err(original.error(format!("{}", InvalidBindingValue)));
             }
             Err(err) => Err(original.error(format!("{}", err))),
