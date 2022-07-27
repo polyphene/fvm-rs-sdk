@@ -23,8 +23,8 @@ pub enum MacroType {
     Export,
 }
 
-/// Takes the parsed input from a `#[fvm_state]` macro and returns the generated bindings
-pub fn expand_state(
+/// Takes the parsed input from a procedural macro and returns the generated bindings
+pub fn expand(
     macro_type: MacroType,
     attr: TokenStream,
     input: TokenStream,
