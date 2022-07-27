@@ -2,6 +2,7 @@
 //! code
 
 use crate::actor::attrs::Dispatch;
+use crate::export::attrs::Binding;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn;
@@ -119,4 +120,16 @@ pub struct StateStructField {
 pub struct ActorImplementation {
     /// The internal dispatch method selected for the actor
     pub dispatch: Dispatch,
+}
+
+/// Information about an entry point being used in an actor
+#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[derive(Clone)]
+pub struct ActorEntryPoint {
+    /// The name of the method in Rust code
+    pub rust_name: syn::Member,
+    /// The name of the method in code
+    pub name: String,
+    /// The internal entry point value specified for the method
+    pub binding: Binding,
 }
