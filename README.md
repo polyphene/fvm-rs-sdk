@@ -94,7 +94,7 @@ use fvm_rs_sdk::actor::fvm_actor;
 ```
 
 - This macro will parse the implementation annotated and generate a proper `invoke()` function that will become the 
-entrypoint of your actor.
+entry point of your actor.
 
 ## License
 
