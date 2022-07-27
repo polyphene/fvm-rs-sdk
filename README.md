@@ -96,6 +96,14 @@ use fvm_rs_sdk::actor::fvm_actor;
 - This macro will parse the implementation annotated and generate a proper `invoke()` function that will become the 
 entrypoint of your actor.
 
+### `fvm_export`
+
+The procedural macro to annotate your actor's entry point in the implementation representing your actor's interface. It 
+can be accessed in the `actor` module:
+```rust
+use fvm_rs_sdk::actor::fvm_export;
+```
+
 ## License
 
 Dual-licensed: [MIT](./LICENSE-MIT), [Apache Software License v2](./LICENSE-APACHE), by way of the

@@ -21,7 +21,6 @@ mod utils;
 pub enum MacroType {
     State,
     Actor,
-    Export,
 }
 
 /// Takes the parsed input from a `#[fvm_state]` macro and returns the generated bindings
@@ -50,9 +49,6 @@ pub fn expand_state(
             let attrs: ActorAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
-        }
-        MacroType::Export => {
-            todo!()
         }
     }
 
