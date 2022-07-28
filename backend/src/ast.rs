@@ -1,6 +1,7 @@
 //! Contains all structures that can be parsed from a `TokenStream`. They will be used when generating
 //! code
 
+use crate::actor::attrs::Dispatch;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn;
@@ -13,6 +14,8 @@ use crate::state::attrs::Codec;
 pub struct Program {
     /// state rust structs
     pub state_structs: Vec<StateStruct>,
+    /// Actor implementation
+    pub actor_implementation: Vec<ActorImplementation>,
 }
 
 /// Information about a Struct being used as state object
@@ -108,4 +111,12 @@ pub struct StateStructField {
     pub struct_name: Ident,
     /// The type of this field
     pub ty: syn::Type,
+}
+
+/// Information about an Implementation being used as an actor interface
+#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[derive(Clone)]
+pub struct ActorImplementation {
+    /// The internal dispatch method selected for the actor
+    pub dispatch: Dispatch,
 }

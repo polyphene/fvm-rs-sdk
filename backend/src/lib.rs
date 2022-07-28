@@ -6,5 +6,7 @@ pub use crate::error::Diagnostic;
 
 #[macro_use]
 mod error;
+pub mod actor;
 pub mod ast;
 pub mod state;
+pub(crate) mod utils;

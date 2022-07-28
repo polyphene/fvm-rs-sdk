@@ -86,6 +86,15 @@ There are two things to know while using this procedural macro:
 and Deserialization.
 - When using the macro on a structure, fields that are not public will not be stored in the state.
 
+### `fvm_actor`
+
+The procedural macro to annotate your actor's interface can be found in the `actor` module:
+```rust
+use fvm_rs_sdk::actor::fvm_actor;
+```
+
+- This macro will parse the annotated implementation and generate a proper `invoke()` function that will become the 
+entry point of your actor.
 
 ## License
 

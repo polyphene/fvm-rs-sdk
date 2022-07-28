@@ -6,18 +6,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 
 use crate::state::attrs::StateAttrs;
-
-/// Conversion trait with context.
-///
-/// Used to convert syn tokens into an AST, that we can then use to generate glue code.
-trait ConvertToAst<Ctx> {
-    /// What we are converting to.
-    type Target;
-    /// Convert into our target.
-    ///
-    /// Since this is used in a procedural macro, use panic to fail.
-    fn convert(self, context: Ctx) -> Result<Self::Target, Diagnostic>;
-}
+use crate::utils::{ConvertToAst, MacroParse};
 
 impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
     type Target = ast::StateStruct;
@@ -70,14 +59,6 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
     }
 }
 
-pub(crate) trait MacroParse<Ctx> {
-    /// Parse the contents of an object into our AST, with a context if necessary.
-    ///
-    /// The context is used to have access to the attributes on `#[fvm_state]`, and to allow
-    /// writing to the output `TokenStream`.
-    fn macro_parse(self, program: &mut ast::Program, context: Ctx) -> Result<(), Diagnostic>;
-}
-
 impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
     fn macro_parse(
         self,
@@ -126,7 +107,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -179,7 +160,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -223,7 +204,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -259,7 +240,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -341,7 +322,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
