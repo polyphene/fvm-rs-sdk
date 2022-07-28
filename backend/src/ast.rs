@@ -4,10 +4,11 @@
 use crate::actor::attrs::Dispatch;
 use crate::export::attrs::Binding;
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn;
 
 use crate::state::attrs::Codec;
+use crate::{Diagnostic, TryToTokens};
 
 /// An abstract syntax tree representing a rust program.
 #[cfg_attr(feature = "extra-traits", derive(Debug))]
@@ -17,6 +18,18 @@ pub struct Program {
     pub state_structs: Vec<StateStruct>,
     /// Actor implementation
     pub actor_implementation: Vec<ActorImplementation>,
+}
+
+impl TryToTokens for Program {
+    // Generate wrappers for all the items that we've found
+    fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
+        // Handling tagged structures
+        for s in self.state_structs.iter() {
+            s.to_tokens(into);
+        }
+
+        Ok(())
+    }
 }
 
 /// Information about a Struct being used as state object
@@ -33,8 +46,8 @@ pub struct StateStruct {
     pub codec: Codec,
 }
 
-impl StateStruct {
-    pub fn generate_state_interface(&self) -> TokenStream {
+impl TryToTokens for StateStruct {
+    fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
         match self.codec {
             Codec::DagCbor => {
                 let name = &self.rust_name;
@@ -94,9 +107,10 @@ impl StateStruct {
                             cid
                         }
                     }
-                )
+                ).to_tokens(into);
             }
         }
+        Ok(())
     }
 }
 

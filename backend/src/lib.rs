@@ -1,6 +1,6 @@
 //! Backend crate for the Filecoin Virtual Machine Rust SDK procedural macro.
 
-pub use state::codegen::TryToTokens as TryStateToTokens;
+pub use utils::TryToTokens;
 
 pub use crate::error::Diagnostic;
 
@@ -10,4 +10,4 @@ pub mod actor;
 pub mod ast;
 pub mod export;
 pub mod state;
-pub(crate) mod utils;
+mod utils;

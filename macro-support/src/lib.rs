@@ -30,7 +30,7 @@ pub fn expand(
     input: TokenStream,
 ) -> Result<TokenStream, Diagnostic> {
     use crate::utils::MacroParse;
-    use backend::TryStateToTokens;
+    use backend::TryToTokens;
 
     let item = syn::parse2::<syn::Item>(input)?;
 
