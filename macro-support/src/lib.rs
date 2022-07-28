@@ -1,11 +1,11 @@
 //! The `macro-support` is responsible for the logic coordination behind the Filecoin Virtual Machine
 //! macros
 
+extern crate core;
+extern crate fvm_rs_sdk_backend as backend;
 extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
-#[macro_use]
-extern crate fvm_rs_sdk_backend as backend;
 
 use backend::Diagnostic;
 use proc_macro2::TokenStream;
@@ -14,13 +14,13 @@ use crate::actor::attrs::ActorAttrs;
 use crate::state::attrs::StateAttrs;
 
 mod actor;
+mod export;
 mod state;
 mod utils;
 
 pub enum MacroType {
     State,
     Actor,
-    Export,
 }
 
 /// Takes the parsed input from a procedural macro and returns the generated bindings
@@ -49,9 +49,6 @@ pub fn expand(
             let attrs: ActorAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
-        }
-        MacroType::Export => {
-            todo!()
         }
     }
 

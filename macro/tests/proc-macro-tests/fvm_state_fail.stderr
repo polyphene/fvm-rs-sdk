@@ -1,8 +1,10 @@
-error: structs with #[fvm_state] cannot have lifetime or type parameters
- --> tests/proc-macro-tests/fvm_state_fail.rs:5:23
+error: structure with #[fvm_state] cannot have lifetime or type parameters.
+ --> tests/proc-macro-tests/fvm_state_fail.rs:4:1
   |
-5 | pub struct MockStruct1<'a> {
-  |                       ^^^^
+4 | #[fvm_state]
+  | ^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `fvm_state` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Serialize` is not satisfied
    --> tests/proc-macro-tests/fvm_state_fail.rs:9:1

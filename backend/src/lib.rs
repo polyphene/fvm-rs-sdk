@@ -8,5 +8,6 @@ pub use crate::error::Diagnostic;
 mod error;
 pub mod actor;
 pub mod ast;
+pub mod export;
 pub mod state;
 pub(crate) mod utils;
