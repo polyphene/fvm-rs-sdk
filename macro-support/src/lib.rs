@@ -6,6 +6,7 @@ extern crate quote;
 extern crate syn;
 #[macro_use]
 extern crate fvm_rs_sdk_backend as backend;
+extern crate core;
 
 use backend::Diagnostic;
 use proc_macro2::TokenStream;

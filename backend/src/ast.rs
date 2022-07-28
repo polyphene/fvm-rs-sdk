@@ -118,6 +118,10 @@ pub struct StateStructField {
 #[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
 #[derive(Clone)]
 pub struct ActorImplementation {
+    /// The name of the implementation in Rust code
+    pub rust_name: syn::Member,
+    /// The name of the implementation in code
+    pub name: String,
     /// The internal dispatch method selected for the actor
     pub dispatch: Dispatch,
     /// The entry points that are available for the actor
@@ -134,4 +138,20 @@ pub struct ActorEntryPoint {
     pub name: String,
     /// The internal entry point value specified for the method
     pub binding: Binding,
+    /// The mutability of the method
+    pub mutability: Mutability,
+    /// Boolean to know if entry point return data
+    pub returns: bool,
+}
+
+/// Information about the mutability of an entry point
+#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[derive(Clone)]
+pub enum Mutability {
+    // No read or write on state
+    Pure,
+    // Read on state
+    View,
+    // Read and write on state
+    Write,
 }
