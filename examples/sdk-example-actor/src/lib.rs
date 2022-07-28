@@ -15,12 +15,12 @@ impl State {
     }
 
     #[fvm_export(binding = 2)]
-    pub fn add(&mut self, value: u64) {
-        self.value += value
+    pub fn add(&mut self) {
+        self.value += 1
     }
 
     #[fvm_export(binding = 3)]
-    pub fn read(&self, value: u64) -> u64 {
+    pub fn read(&self) -> u64 {
         self.value
     }
 }
