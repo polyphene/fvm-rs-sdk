@@ -9,7 +9,9 @@ use quote::ToTokens;
 use syn::{Attribute, ImplItem, Item, Type};
 
 use crate::actor::attrs::ActorAttrs;
-use crate::actor::error::Error::{GenericsOnInterface, UnexpectedImplementationType};
+use crate::actor::error::Error::{
+    ExpectedImplementation, GenericsOnInterface, UnexpectedImplementationType,
+};
 use crate::export::attrs::ExportAttrs;
 
 impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
@@ -106,10 +108,7 @@ impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
                 i.to_tokens(tokens);
             }
             _ => {
-                bail_span!(
-                    self,
-                    "#[fvm_actor] can only be applied to an implementation",
-                );
+                return Err(Diagnostic::error(format!("{}", ExpectedImplementation)));
             }
         }
 

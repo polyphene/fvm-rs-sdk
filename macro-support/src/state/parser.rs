@@ -67,14 +67,14 @@ impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
     ) -> Result<(), Diagnostic> {
         // Match of Item types to parse & generate our AST
         match self {
-            // Handles strcutures
+            // Handles structures
             syn::Item::Struct(mut s) => {
                 let attrs = attrs.unwrap_or_default();
                 program.state_structs.push((&mut s).convert(attrs)?);
                 s.to_tokens(tokens);
             }
             _ => {
-                bail_span!(self, "#[fvm_state] can only be applied to a public struct",);
+                return Err(Diagnostic::error(format!("{}", ExpectedStructure)));
             }
         }
 
