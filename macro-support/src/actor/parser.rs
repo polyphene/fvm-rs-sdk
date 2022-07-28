@@ -104,7 +104,7 @@ impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
         match self {
             Item::Impl(mut i) => {
                 let attrs = attrs.unwrap_or_default();
-                program.actor_implementation.push((&mut i).convert(attrs)?);
+                program.actor_implementation = Some((&mut i).convert(attrs)?);
                 i.to_tokens(tokens);
             }
             _ => {
@@ -156,7 +156,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_implementation: &ActorImplementation = &program.actor_implementation[0];
+        let actor_implementation: &ActorImplementation = &program.actor_implementation.unwrap();
 
         assert_eq!(actor_implementation.dispatch, Dispatch::Numeric);
         assert_eq!(actor_implementation.name, String::from("Actor"));
@@ -191,7 +191,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_implementation: &ActorImplementation = &program.actor_implementation[0];
+        let actor_implementation: &ActorImplementation = &program.actor_implementation.unwrap();
 
         assert_eq!(actor_implementation.dispatch, Dispatch::Numeric);
     }

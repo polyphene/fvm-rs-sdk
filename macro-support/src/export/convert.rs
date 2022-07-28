@@ -145,7 +145,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_entry_points = &program.actor_implementation[0].entry_points;
+        let actor_entry_points = &program.actor_implementation.unwrap().entry_points;
         assert_eq!(actor_entry_points.len(), 3);
 
         assert_eq!(actor_entry_points[0].name, String::from("new"));

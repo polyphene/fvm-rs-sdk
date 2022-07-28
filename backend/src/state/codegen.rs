@@ -200,7 +200,7 @@ mod tests {
                 // Create ast::Program
                 let program = ast::Program {
                     state_structs: vec![ast_struct],
-                    actor_implementation: vec![],
+                    actor_implementation: None,
                 };
 
                 program.try_to_tokens(&mut token_stream).unwrap();

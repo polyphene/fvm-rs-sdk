@@ -17,7 +17,7 @@ pub struct Program {
     /// state rust structs
     pub state_structs: Vec<StateStruct>,
     /// Actor implementation
-    pub actor_implementation: Vec<ActorImplementation>,
+    pub actor_implementation: Option<ActorImplementation>,
 }
 
 impl TryToTokens for Program {
@@ -26,6 +26,10 @@ impl TryToTokens for Program {
         // Handling tagged structures
         for s in self.state_structs.iter() {
             s.to_tokens(into);
+        }
+
+        if let Some(actor_implementation) = &self.actor_implementation {
+            actor_implementation.to_tokens(into);
         }
 
         Ok(())
