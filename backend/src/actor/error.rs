@@ -8,6 +8,6 @@ pub enum Error {
     #[error("unknown dispatch method '{0}'")]
     UnkownDispatchMethod(String),
     /// This error is thrown when the dispatch method is not a literal string
-    #[error("invalid codec format, {0}")]
+    #[error("invalid dispatch format, {0}")]
     InvalidDispatchMethodFormat(String),
 }
