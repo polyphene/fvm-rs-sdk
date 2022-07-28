@@ -93,7 +93,7 @@ The procedural macro to annotate your actor's interface can be found in the `act
 use fvm_rs_sdk::actor::fvm_actor;
 ```
 
-- This macro will parse the implementation annotated and generate a proper `invoke()` function that will become the 
+- This macro will parse the annotated implementation and generate a proper `invoke()` function that will become the 
 entry point of your actor.
 
 ## License
