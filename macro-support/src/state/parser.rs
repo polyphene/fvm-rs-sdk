@@ -6,6 +6,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 
 use crate::state::attrs::StateAttrs;
+use crate::state::error::Error::{ExpectedStructure, GenericsOnStructure};
 use crate::utils::{ConvertToAst, MacroParse};
 
 impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
@@ -14,10 +15,7 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
     fn convert(self, attrs: StateAttrs) -> Result<Self::Target, Diagnostic> {
         // No lifetime to make sure that we can handle it correctly
         if !self.generics.params.is_empty() {
-            bail_span!(
-                self.generics,
-                "structs with #[fvm_state] cannot have lifetime or type parameters"
-            );
+            return Err(Diagnostic::error(format!("{}", GenericsOnStructure)));
         }
 
         // When handling struct, first create fields objects
@@ -171,14 +169,12 @@ mod tests {
             Err(diagnostic) => {
                 let res_panic = std::panic::catch_unwind(|| diagnostic.panic());
                 match res_panic {
-                    Err(err) => {
-                        match err.downcast::<String>() {
-                            Ok(panic_msg_box) => {
-                                assert_eq!(panic_msg_box.as_str(), "structs with #[fvm_state] cannot have lifetime or type parameters");
-                            }
-                            Err(_) => unreachable!(),
+                    Err(err) => match err.downcast::<String>() {
+                        Ok(panic_msg_box) => {
+                            assert_eq!(panic_msg_box.as_str(), "structure with #[fvm_state] cannot have lifetime or type parameters.");
                         }
-                    }
+                        Err(_) => unreachable!(),
+                    },
                     _ => unreachable!(),
                 }
             }
