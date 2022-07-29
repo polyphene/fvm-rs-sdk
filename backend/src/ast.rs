@@ -105,3 +105,26 @@ pub enum Mutability {
     // Read and write on state
     Write,
 }
+
+impl Mutability {
+    pub fn is_pure(&self) -> bool {
+        match self {
+            Mutability::Pure => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_view(&self) -> bool {
+        match self {
+            Mutability::View => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_write(&self) -> bool {
+        match self {
+            Mutability::Write => true,
+            _ => false,
+        }
+    }
+}

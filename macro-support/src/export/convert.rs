@@ -55,6 +55,8 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             },
             None => Mutability::Pure,
         };
+
+        //TODO iter through params for codegen
         // Check if there is a returned value
         let returns = match self.sig.output {
             ReturnType::Default => false,
@@ -121,7 +123,7 @@ mod tests {
                 }
 
                 #[fvm_export(binding=3)]
-                pub fn read(&self, value: u64) -> u64 {
+                pub fn read(&self) -> u64 {
                     self.count
                 }
             }

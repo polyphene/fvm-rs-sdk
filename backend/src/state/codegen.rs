@@ -56,7 +56,7 @@ impl ToTokens for ast::StateStruct {
                             };
                             let cid = match fvm_rs_sdk::syscall::ipld::put(
                                 fvm_rs_sdk::cid::Code::Blake2b256.into(),
-                                32,
+                                fvm_rs_sdk::state::cbor::SIZE,
                                 fvm_rs_sdk::encoding::DAG_CBOR,
                                 serialized.as_slice(),
                             ) {

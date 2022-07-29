@@ -1,6 +1,6 @@
 //! Contains attributes available for the `#[fvm_actor]` procedural macro.
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 use crate::utils::AnyIdent;
 use anyhow::Result;
@@ -51,6 +51,16 @@ impl Parse for ExportAttr {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Binding {
     Numeric(u64),
+}
+
+impl TryInto<u64> for Binding {
+    type Error = crate::export::error::Error;
+
+    fn try_into(self) -> std::result::Result<u64, Self::Error> {
+        match self {
+            Binding::Numeric(num) => Ok(num),
+        }
+    }
 }
 
 impl Default for Binding {
