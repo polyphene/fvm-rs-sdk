@@ -15,4 +15,13 @@ pub enum Error {
         "'{0}' can not be used as an entry point. Methods with #[fvm_export] should be public."
     )]
     VisbilityNotPublic(String),
+    /// This error is thrown when an argument in a method has an unexpected type
+    #[error("{0}, '{1}', can not be used as a type for an entry point argument.")]
+    UnexpectedArgType(String, String),
+    /// This error is thrown when an argument has a type that can not be interpreted
+    #[error("'{0}' can not be interpreted and thus can not be used as a type for an entry point argument.")]
+    UnhandledType(String),
+    /// This error is thrown when an argument is of receiver type at an unexpected position
+    #[error("'self' should only be used as first argument for an entry point argument.")]
+    UnexpectedArgReceiver,
 }

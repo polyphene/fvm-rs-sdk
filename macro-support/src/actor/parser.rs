@@ -30,6 +30,7 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
         };
 
         // Get impl name & ident
+        // TODO should be possible to genetate rust name with to_token_stream, allowing for smthing else than Ident
         let (rust_name, name) = match self.self_ty.as_ref() {
             Type::Path(type_path) => {
                 let path_ident = match type_path.path.get_ident() {

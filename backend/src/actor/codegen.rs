@@ -19,10 +19,10 @@ impl ToTokens for ast::ActorImplementation {
             let mut method_call = TokenStream::new();
 
             // If method not pure load state
-            if !entry_point.mutability.is_pure() {
+            if !matches!(entry_point.mutability, Mutability::Pure) {
                 // let keyword
                 quote!(let).to_tokens(&mut method_call);
-                if entry_point.mutability.is_write() {
+                if matches!(entry_point.mutability, Mutability::Write) {
                     // Add mut keyword if write mutability
                     quote!(mut).to_tokens(&mut method_call);
                 }
@@ -73,7 +73,7 @@ impl ToTokens for ast::ActorImplementation {
             }
 
             // If mutability is write then save state
-            if entry_point.mutability.is_write() {
+            if matches!(entry_point.mutability, Mutability::Write) {
                 quote!(
                     state.save();
                 )

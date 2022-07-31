@@ -92,6 +92,8 @@ pub struct ActorEntryPoint {
     pub mutability: Mutability,
     /// Boolean to know if entry point return data
     pub returns: bool,
+    /// Arguments expected by the method
+    pub arguments: Vec<MethodArgument>,
 }
 
 /// Information about the mutability of an entry point
@@ -106,25 +108,12 @@ pub enum Mutability {
     Write,
 }
 
-impl Mutability {
-    pub fn is_pure(&self) -> bool {
-        match self {
-            Mutability::Pure => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_view(&self) -> bool {
-        match self {
-            Mutability::View => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_write(&self) -> bool {
-        match self {
-            Mutability::Write => true,
-            _ => false,
-        }
-    }
+/// Information about an argument for a method used as an entry point
+#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[derive(Clone)]
+pub struct MethodArgument {
+    /// Boolean to know if the parameter should be mutable
+    pub mutable: bool,
+    /// The internal entry point value specified for the method
+    pub arg_type: syn::Member,
 }

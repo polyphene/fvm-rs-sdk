@@ -5,11 +5,14 @@ use backend::actor::attrs::Dispatch;
 use backend::ast::Mutability;
 use backend::export::attrs::Binding;
 use backend::{ast, Diagnostic};
-use syn::{FnArg, ReturnType, Visibility};
+use proc_macro2::{Ident, Span};
+use quote::ToTokens;
+use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type, Visibility};
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
-    GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding, VisbilityNotPublic,
+    GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding, UnexpectedArgReceiver,
+    UnexpectedArgType, UnhandledType, VisbilityNotPublic,
 };
 
 impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod {
@@ -56,6 +59,11 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             None => Mutability::Pure,
         };
 
+        let mut arguments = vec![];
+        for input in self.sig.inputs.iter().skip(1) {
+            arguments.push(input.convert(())?)
+        }
+
         //TODO iter through params for codegen
         // Check if there is a returned value
         let returns = match self.sig.output {
@@ -75,6 +83,7 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                         binding: Binding::Numeric(*value),
                         mutability,
                         returns,
+                        arguments,
                     }),
                     // Allow unreachable patters for future evolutions
                     #[allow(unreachable_patterns)]
@@ -89,6 +98,192 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                     }
                 }
             }
+        }
+    }
+}
+
+impl<'a> ConvertToAst<()> for &'a FnArg {
+    type Target = ast::MethodArgument;
+
+    fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
+        match self {
+            FnArg::Typed(pat_type) => {
+                let mutable = match pat_type.pat.as_ref() {
+                    Pat::Ident(i) => i.mutability.is_some(),
+                    _ => false,
+                };
+
+                let arg_type = pat_type.ty.as_ref().convert(())?;
+
+                Ok(ast::MethodArgument { mutable, arg_type })
+            }
+            FnArg::Receiver(_) => {
+                return Err(Diagnostic::error(format!("{}", UnexpectedArgReceiver)))
+            }
+        }
+    }
+}
+
+impl<'a> ConvertToAst<()> for &'a Type {
+    type Target = syn::Member;
+
+    fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
+        match self {
+            Type::Array(a) => {
+                let _ = a.elem.as_ref().convert(())?;
+
+                Ok(syn::Member::Named(Ident::new(
+                    &a.to_token_stream().to_string(),
+                    Span::call_site(),
+                )))
+            }
+            Type::Paren(p) => {
+                let _ = p.elem.as_ref().convert(())?;
+
+                Ok(syn::Member::Named(Ident::new(
+                    &p.to_token_stream().to_string(),
+                    Span::call_site(),
+                )))
+            }
+            Type::Path(p) => {
+                match &p.path.segments.last().unwrap().arguments {
+                    PathArguments::None => {}
+                    PathArguments::AngleBracketed(b) => {
+                        for arg in b.args.iter() {
+                            match arg {
+                                GenericArgument::Lifetime(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a type with specified lifetime"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                                GenericArgument::Type(t) => {
+                                    let _ = t.convert(())?;
+                                }
+                                GenericArgument::Binding(b) => {
+                                    let _ = &b.ty.convert(())?;
+                                }
+                                GenericArgument::Constraint(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a constraint type"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                                GenericArgument::Const(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a const expression"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                            }
+                        }
+                    }
+                    PathArguments::Parenthesized(_) => {
+                        return Err(Diagnostic::error(format!(
+                            "{}",
+                            UnexpectedArgType(
+                                String::from("arguments of a function path segment"),
+                                p.to_token_stream().to_string()
+                            )
+                        )))
+                    }
+                }
+                Ok(syn::Member::Named(Ident::new(
+                    &p.to_token_stream().to_string(),
+                    Span::call_site(),
+                )))
+            }
+            Type::Tuple(t) => {
+                for elem in t.elems.iter() {
+                    let _ = elem.convert(())?;
+                }
+
+                Ok(syn::Member::Named(Ident::new(
+                    &t.to_token_stream().to_string(),
+                    Span::call_site(),
+                )))
+            }
+            Type::BareFn(b) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a bare function type"),
+                    b.to_token_stream().to_string()
+                )
+            ))),
+            Type::Group(g) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a type contained within invisible delimiters"),
+                    g.to_token_stream().to_string()
+                )
+            ))),
+            Type::ImplTrait(i) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("an impl type"),
+                    i.to_token_stream().to_string()
+                )
+            ))),
+            Type::Infer(i) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("the infer type"),
+                    i.to_token_stream().to_string()
+                )
+            ))),
+            Type::Macro(m) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(String::from("a macro"), m.to_token_stream().to_string())
+            ))),
+            Type::Never(n) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("the never type"),
+                    n.to_token_stream().to_string()
+                )
+            ))),
+            Type::Ptr(p) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a pointer type"),
+                    p.to_token_stream().to_string()
+                )
+            ))),
+            Type::Reference(r) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a referenced type"),
+                    r.to_token_stream().to_string()
+                )
+            ))),
+            Type::Slice(s) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a slice type"),
+                    s.to_token_stream().to_string()
+                )
+            ))),
+            Type::TraitObject(t) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a trait object type"),
+                    t.to_token_stream().to_string()
+                )
+            ))),
+            Type::Verbatim(v) => Err(Diagnostic::error(format!(
+                "{}",
+                UnhandledType(v.to_string())
+            ))),
+            _ => unreachable!(),
         }
     }
 }
