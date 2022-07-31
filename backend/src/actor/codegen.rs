@@ -1,6 +1,6 @@
 //! Codegen has the logic of code generation for our actor through the `#[fvm_state]` macro.
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
 use std::convert::TryInto;
 
@@ -15,6 +15,51 @@ impl ToTokens for ast::ActorImplementation {
         for entry_point in self.entry_points.iter() {
             let entry_point_value: u64 = entry_point.binding.clone().try_into().unwrap();
             let method_name = entry_point.rust_name.clone();
+
+            // Token stream to represent variables in which we will deserialize
+            let mut parameters_variables = TokenStream::new();
+            // Token stream representing the parameters passed along the method
+            let mut method_parameters = TokenStream::new();
+            // Token stream representing the types of the variables, for deserialization
+            let mut parameters_types = TokenStream::new();
+            // Token stream represneting the code to fetch & deserialize parameters
+            let mut parameters_deserialization = TokenStream::new();
+
+            // If there are parameters for the method then prepare them for the call
+            if entry_point.arguments.len() > 0usize {
+                for (i, argument) in entry_point.arguments.iter().enumerate() {
+                    let arg_type = argument.arg_type.clone();
+
+                    // Variable name based on argument name & index, to prevent naming collision
+                    let variable = syn::Member::Named(Ident::new(
+                        &format!("{}{}", argument.name, i),
+                        Span::call_site(),
+                    ));
+                    // Add variable type to token stream
+                    quote!(#arg_type).to_tokens(&mut parameters_types);
+                    // If argument has to be mutable pass variable name with `mut`
+                    if argument.mutable {
+                        quote!(mut #variable).to_tokens(&mut parameters_variables);
+                    } else {
+                        quote!(#variable).to_tokens(&mut parameters_variables);
+                    }
+                    // Pass variable name in method parameters
+                    quote!(#variable).to_tokens(&mut method_parameters);
+
+                    // If not the last entry, add comma
+                    if i != entry_point.arguments.len() - 1 {
+                        quote!(, ).to_tokens(&mut parameters_types);
+                        quote!(, ).to_tokens(&mut parameters_variables);
+                        quote!(, ).to_tokens(&mut method_parameters);
+                    }
+                }
+                // Code to fetch bytes from pointer then deserialize in given variables
+                quote!(
+                    let params_bytes = fvm_rs_sdk::syscall::message::params_raw(params_pointer).unwrap().1;
+                    let (#parameters_variables): (#parameters_types) = fvm_rs_sdk::encoding::RawBytes::new(params_bytes).deserialize().unwrap();
+                )
+                .to_tokens(&mut parameters_deserialization);
+            }
 
             let mut method_call = TokenStream::new();
 
@@ -44,15 +89,11 @@ impl ToTokens for ast::ActorImplementation {
             // Handle method calling based on mutability
             match entry_point.mutability {
                 Mutability::Pure => quote!(
-                    #impl_member::#method_name();
+                    #impl_member::#method_name(#method_parameters);
                 )
                 .to_tokens(&mut method_call),
-                Mutability::View => quote!(
-                    state.#method_name();
-                )
-                .to_tokens(&mut method_call),
-                Mutability::Write => quote!(
-                    state.#method_name();
+                _ => quote!(
+                    state.#method_name(#method_parameters);
                 )
                 .to_tokens(&mut method_call),
             };
@@ -82,6 +123,7 @@ impl ToTokens for ast::ActorImplementation {
 
             entry_points.push(quote!(
                 #entry_point_value => {
+                    #parameters_deserialization
                     let mut ret = None;
                     #method_call
                     ret

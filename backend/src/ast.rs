@@ -112,6 +112,8 @@ pub enum Mutability {
 #[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
 #[derive(Clone)]
 pub struct MethodArgument {
+    /// Argument name
+    pub name: String,
     /// Boolean to know if the parameter should be mutable
     pub mutable: bool,
     /// The internal entry point value specified for the method

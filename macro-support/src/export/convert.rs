@@ -11,8 +11,8 @@ use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type, Visibili
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
-    GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding, UnexpectedArgReceiver,
-    UnexpectedArgType, UnhandledType, VisbilityNotPublic,
+    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding,
+    UnexpectedArgReceiver, UnexpectedArgType, UnhandledType, VisbilityNotPublic,
 };
 
 impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod {
@@ -108,14 +108,23 @@ impl<'a> ConvertToAst<()> for &'a FnArg {
     fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
         match self {
             FnArg::Typed(pat_type) => {
-                let mutable = match pat_type.pat.as_ref() {
-                    Pat::Ident(i) => i.mutability.is_some(),
-                    _ => false,
+                let (mutable, name) = match pat_type.pat.as_ref() {
+                    Pat::Ident(i) => (i.mutability.is_some(), i.ident.to_string()),
+                    _ => {
+                        return Err(Diagnostic::error(format!(
+                            "{}",
+                            ExpectedBindingToNewVariable
+                        )))
+                    }
                 };
 
                 let arg_type = pat_type.ty.as_ref().convert(())?;
 
-                Ok(ast::MethodArgument { mutable, arg_type })
+                Ok(ast::MethodArgument {
+                    name,
+                    mutable,
+                    arg_type,
+                })
             }
             FnArg::Receiver(_) => {
                 return Err(Diagnostic::error(format!("{}", UnexpectedArgReceiver)))

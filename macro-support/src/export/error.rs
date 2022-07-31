@@ -24,4 +24,7 @@ pub enum Error {
     /// This error is thrown when an argument is of receiver type at an unexpected position
     #[error("'self' should only be used as first argument for an entry point argument.")]
     UnexpectedArgReceiver,
+    /// This error is thrown when the pattern for argument is not a biding to a new variable
+    #[error("expected binding to variable when parsing method arguments.")]
+    ExpectedBindingToNewVariable,
 }
