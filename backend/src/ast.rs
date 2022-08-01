@@ -65,7 +65,7 @@ pub struct StateStructField {
 }
 
 /// Information about an Implementation being used as an actor interface
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct ActorImplementation {
     /// The name of the implementation in Rust code
@@ -79,7 +79,7 @@ pub struct ActorImplementation {
 }
 
 /// Information about an entry point being used in an actor
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct ActorEntryPoint {
     /// The name of the method in Rust code
