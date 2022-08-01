@@ -117,5 +117,5 @@ pub struct MethodArgument {
     /// Boolean to know if the parameter should be mutable
     pub mutable: bool,
     /// The internal entry point value specified for the method
-    pub arg_type: syn::Member,
+    pub arg_type: TokenStream,
 }

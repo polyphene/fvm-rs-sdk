@@ -5,7 +5,7 @@ use backend::actor::attrs::Dispatch;
 use backend::ast::Mutability;
 use backend::export::attrs::Binding;
 use backend::{ast, Diagnostic};
-use proc_macro2::{Ident, Span};
+use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type, Visibility};
 
@@ -64,7 +64,6 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             arguments.push(input.convert(())?)
         }
 
-        //TODO iter through params for codegen
         // Check if there is a returned value
         let returns = match self.sig.output {
             ReturnType::Default => false,
@@ -134,25 +133,19 @@ impl<'a> ConvertToAst<()> for &'a FnArg {
 }
 
 impl<'a> ConvertToAst<()> for &'a Type {
-    type Target = syn::Member;
+    type Target = TokenStream;
 
     fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
         match self {
             Type::Array(a) => {
                 let _ = a.elem.as_ref().convert(())?;
 
-                Ok(syn::Member::Named(Ident::new(
-                    &a.to_token_stream().to_string(),
-                    Span::call_site(),
-                )))
+                Ok(a.to_token_stream())
             }
             Type::Paren(p) => {
                 let _ = p.elem.as_ref().convert(())?;
 
-                Ok(syn::Member::Named(Ident::new(
-                    &p.to_token_stream().to_string(),
-                    Span::call_site(),
-                )))
+                Ok(p.to_token_stream())
             }
             Type::Path(p) => {
                 match &p.path.segments.last().unwrap().arguments {
@@ -206,20 +199,14 @@ impl<'a> ConvertToAst<()> for &'a Type {
                         )))
                     }
                 }
-                Ok(syn::Member::Named(Ident::new(
-                    &p.to_token_stream().to_string(),
-                    Span::call_site(),
-                )))
+                Ok(p.to_token_stream())
             }
             Type::Tuple(t) => {
                 for elem in t.elems.iter() {
                     let _ = elem.convert(())?;
                 }
 
-                Ok(syn::Member::Named(Ident::new(
-                    &t.to_token_stream().to_string(),
-                    Span::call_site(),
-                )))
+                Ok(t.to_token_stream())
             }
             Type::BareFn(b) => Err(Diagnostic::error(format!(
                 "{}",

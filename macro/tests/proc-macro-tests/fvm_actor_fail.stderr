@@ -1,0 +1,69 @@
+error: implementation with #[fvm_actor] cannot have lifetime or type parameters.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:11:1
+   |
+11 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a referenced type, '& u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:20:1
+   |
+20 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a bare function type, 'fn(u64) -> u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:29:1
+   |
+29 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: expected attribute arguments in parentheses: #[fvm_export(...)]
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:40:5
+   |
+40 |     #[fvm_export]
+   |     ^^^^^^^^^^^^^
+
+error: a pointer type, '* mut u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:47:1
+   |
+47 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: 'add' can not be used as an entry point. Methods with #[fvm_export] should be public.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:56:1
+   |
+56 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: the never type, '!', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:65:1
+   |
+65 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a slice type, '[u64]', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:74:1
+   |
+74 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `fvm_export`
+ --> tests/proc-macro-tests/fvm_actor_fail.rs:2:36
+  |
+2 | use fvm_rs_sdk::actor::{fvm_actor, fvm_export};
+  |                                    ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

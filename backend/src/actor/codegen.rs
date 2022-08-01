@@ -22,7 +22,7 @@ impl ToTokens for ast::ActorImplementation {
             let mut method_parameters = TokenStream::new();
             // Token stream representing the types of the variables, for deserialization
             let mut parameters_types = TokenStream::new();
-            // Token stream represneting the code to fetch & deserialize parameters
+            // Token stream representing the code to fetch & deserialize parameters
             let mut parameters_deserialization = TokenStream::new();
 
             // If there are parameters for the method then prepare them for the call
@@ -37,6 +37,7 @@ impl ToTokens for ast::ActorImplementation {
                     ));
                     // Add variable type to token stream
                     quote!(#arg_type).to_tokens(&mut parameters_types);
+
                     // If argument has to be mutable pass variable name with `mut`
                     if argument.mutable {
                         quote!(mut #variable).to_tokens(&mut parameters_variables);
