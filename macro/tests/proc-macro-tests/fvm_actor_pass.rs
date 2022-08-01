@@ -18,7 +18,6 @@ impl MockStruct1 {
         _c: fvm_rs_sdk::cid::Cid,
         _d: [u8; 5],
         _e: (String, String),
-        _f: (u32),
     ) -> u64 {
         0
     }

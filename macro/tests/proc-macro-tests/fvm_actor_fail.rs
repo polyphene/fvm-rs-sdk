@@ -1,4 +1,5 @@
 #![allow(unreachable_code)]
+#[allow(unused_imports)]
 use fvm_rs_sdk::actor::{fvm_actor, fvm_export};
 use fvm_rs_sdk::state::*;
 
