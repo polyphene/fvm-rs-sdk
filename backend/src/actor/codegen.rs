@@ -26,7 +26,7 @@ impl ToTokens for ast::ActorImplementation {
             let mut parameters_deserialization = TokenStream::new();
 
             // If there are parameters for the method then prepare them for the call
-            if entry_point.arguments.len() > 0usize {
+            if !entry_point.arguments.is_empty() {
                 for (i, argument) in entry_point.arguments.iter().enumerate() {
                     let arg_type = argument.arg_type.clone();
 

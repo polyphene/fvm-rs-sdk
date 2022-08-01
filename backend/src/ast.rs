@@ -109,7 +109,7 @@ pub enum Mutability {
 }
 
 /// Information about an argument for a method used as an entry point
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct MethodArgument {
     /// Argument name
