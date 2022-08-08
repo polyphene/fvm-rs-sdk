@@ -41,7 +41,7 @@ impl TryToTokens for Program {
 #[derive(Clone)]
 pub struct StateStruct {
     /// The name of the struct in Rust code
-    pub rust_name: Ident,
+    pub rust_name: TokenStream,
     /// The name of the struct for the SDK
     pub name: String,
     /// All the fields of this struct to export
@@ -55,7 +55,7 @@ pub struct StateStruct {
 #[derive(Clone)]
 pub struct StateStructField {
     /// The name of the field in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the field in code
     pub name: String,
     /// The name of the struct this field is part of
@@ -69,7 +69,7 @@ pub struct StateStructField {
 #[derive(Clone)]
 pub struct ActorImplementation {
     /// The name of the implementation in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the implementation in code
     pub name: String,
     /// The internal dispatch method selected for the actor
@@ -83,7 +83,7 @@ pub struct ActorImplementation {
 #[derive(Clone)]
 pub struct ActorEntryPoint {
     /// The name of the method in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the method in code
     pub name: String,
     /// The internal entry point value specified for the method

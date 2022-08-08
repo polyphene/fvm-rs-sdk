@@ -3,7 +3,7 @@
 use backend::state::attrs::Codec;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 
 use crate::state::attrs::StateAttrs;
 use crate::state::error::Error::{ExpectedStructure, GenericsOnStructure};
@@ -28,13 +28,13 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
             }
 
             // Derive field name from ident
-            let (name, member) = match &field.ident {
-                Some(ident) => (ident.to_string(), syn::Member::Named(ident.clone())),
-                None => (i.to_string(), syn::Member::Unnamed(i.into())),
+            let (name, token_stream) = match &field.ident {
+                Some(ident) => (ident.to_string(), ident.to_token_stream().clone()),
+                None => (i.to_string(), quote!(#i).to_token_stream()),
             };
 
             fields.push(ast::StateStructField {
-                rust_name: member,
+                rust_name: token_stream,
                 name,
                 struct_name: self.ident.clone(),
                 ty: field.ty.clone(),
@@ -49,7 +49,7 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
 
         // Generate the AST object for the Struct
         Ok(ast::StateStruct {
-            rust_name: self.ident.clone(),
+            rust_name: self.ident.to_token_stream(),
             name: self.ident.to_string(),
             fields,
             codec,
@@ -84,7 +84,7 @@ impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
 mod tests {
     use backend::state::attrs::Codec;
     use quote::quote;
-    use syn::{Member, Type};
+    use syn::Type;
 
     use super::*;
 
@@ -133,12 +133,7 @@ mod tests {
                 panic!("count type should be path")
             }
         }
-        match &parsed_field.rust_name {
-            Member::Named(ident) => {
-                assert_eq!(ident.to_string(), parsed_field.name);
-            }
-            _ => panic!("parsed struct field rust name should be named"),
-        }
+        assert_eq!(parsed_field.rust_name.to_string(), parsed_field.name);
     }
 
     #[test]

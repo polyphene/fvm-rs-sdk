@@ -1,5 +1,5 @@
 #![allow(unreachable_code)]
-use fvm_rs_sdk::actor::{fvm_actor, fvm_export};
+use fvm_rs_sdk::actor::fvm_export;
 use fvm_rs_sdk::state::*;
 
 #[fvm_state]
@@ -7,7 +7,8 @@ pub struct MockStruct1 {
     pub count: u64,
 }
 
-#[fvm_actor]
+// Test path import for fvm_actor
+#[fvm_rs_sdk::actor::fvm_actor]
 impl MockStruct1 {
     // Test mutable state method & different types
     #[fvm_export(binding = 1)]
@@ -29,6 +30,12 @@ impl MockStruct1 {
     // Test pure method
     #[fvm_export(binding = 3)]
     pub fn third_mock() -> u64 {
+        0
+    }
+
+    // Test path import for fvm_export
+    #[fvm_rs_sdk::actor::fvm_export(binding = 4)]
+    pub fn fourth_mock() -> u64 {
         0
     }
 }

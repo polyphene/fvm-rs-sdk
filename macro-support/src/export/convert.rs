@@ -77,7 +77,7 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                 match binding_value {
                     // For numeric dispatch we expect an integer value
                     Binding::Numeric(value) => Ok(ast::ActorEntryPoint {
-                        rust_name: syn::Member::Named(self.sig.ident.clone()),
+                        rust_name: self.sig.ident.to_token_stream(),
                         name: self.sig.ident.to_string(),
                         binding: Binding::Numeric(*value),
                         mutability,
