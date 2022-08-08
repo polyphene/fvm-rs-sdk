@@ -37,7 +37,7 @@ impl TryToTokens for Program {
 }
 
 /// Information about a Struct being used as state object
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct StateStruct {
     /// The name of the struct in Rust code
@@ -51,7 +51,7 @@ pub struct StateStruct {
 }
 
 /// The field of a struct
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct StateStructField {
     /// The name of the field in Rust code
