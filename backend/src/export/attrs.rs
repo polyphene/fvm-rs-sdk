@@ -30,7 +30,7 @@ impl Parse for ExportAttr {
         let attr: AnyIdent = input.parse()?;
         let attr = attr.0;
 
-        return match ExportAttr::try_from(attr.to_string()) {
+        match ExportAttr::try_from(attr.to_string()) {
             Ok(ExportAttr::Binding(_)) => {
                 input.parse::<syn::token::Eq>()?;
                 // Try to get value from parsing an integer
@@ -44,7 +44,7 @@ impl Parse for ExportAttr {
                 return Err(original.error(format!("{}", InvalidBindingValue)));
             }
             Err(err) => Err(original.error(format!("{}", err))),
-        };
+        }
     }
 }
 
