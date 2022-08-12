@@ -41,7 +41,7 @@ impl Parse for ExportAttr {
                         })?,
                     )));
                 }
-                return Err(original.error(format!("{}", InvalidBindingValue)));
+                Err(original.error(format!("{}", InvalidBindingValue)))
             }
             Err(err) => Err(original.error(format!("{}", err))),
         }
