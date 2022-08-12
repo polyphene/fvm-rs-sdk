@@ -30,7 +30,7 @@ impl Parse for StateAttr {
         let attr: AnyIdent = input.parse()?;
         let attr = attr.0;
 
-        return match StateAttr::try_from(attr.to_string()) {
+        match StateAttr::try_from(attr.to_string()) {
             Ok(StateAttr::Codec(_)) => {
                 input.parse::<syn::token::Eq>()?;
                 let val = match input.parse::<syn::LitStr>() {
@@ -47,7 +47,7 @@ impl Parse for StateAttr {
                 Ok(StateAttr::Codec(val))
             }
             Err(err) => Err(original.error(format!("{}", err))),
-        };
+        }
     }
 }
 

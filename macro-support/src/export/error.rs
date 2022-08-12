@@ -10,11 +10,6 @@ pub enum Error {
     /// This error is thrown when an entry point is declared with generics
     #[error("'{0}' can not be used as an entry point. Methods with #[fvm_export] cannot have lifetime or type parameters.")]
     GenericsOnEntryPoint(String),
-    /// This error is thrown when an entry point is not declared as public
-    #[error(
-        "'{0}' can not be used as an entry point. Methods with #[fvm_export] should be public."
-    )]
-    VisbilityNotPublic(String),
     /// This error is thrown when an argument in a method has an unexpected type
     #[error("{0}, '{1}', can not be used as a type for an entry point argument.")]
     UnexpectedArgType(String, String),

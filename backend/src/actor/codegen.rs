@@ -106,7 +106,7 @@ impl ToTokens for ast::ActorImplementation {
                         Ok(ret) => Some(fvm_rs_sdk::encoding::RawBytes::new(ret)),
                         Err(err) => {
                             fvm_rs_sdk::syscall::vm::abort(
-                                fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                                fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
                                 Some(format!("failed to serialize return value: {:?}", err).as_str()),
                             );
                         }

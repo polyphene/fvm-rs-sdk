@@ -18,18 +18,24 @@ pub struct Program {
     pub state_structs: Vec<StateStruct>,
     /// Actor implementation
     pub actor_implementation: Option<ActorImplementation>,
+    /// state rust structs
+    pub payload_structs: Vec<PayloadStruct>,
 }
 
 impl TryToTokens for Program {
     // Generate wrappers for all the items that we've found
     fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
-        // Handling tagged structures
+        // Handling tagged state structures
         for s in self.state_structs.iter() {
             s.to_tokens(into);
         }
-
+        // Handling tagged implementation
         if let Some(actor_implementation) = &self.actor_implementation {
             actor_implementation.to_tokens(into);
+        }
+
+        for s in self.payload_structs.iter() {
+            s.to_tokens(into);
         }
 
         Ok(())
@@ -37,11 +43,11 @@ impl TryToTokens for Program {
 }
 
 /// Information about a Struct being used as state object
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct StateStruct {
     /// The name of the struct in Rust code
-    pub rust_name: Ident,
+    pub rust_name: TokenStream,
     /// The name of the struct for the SDK
     pub name: String,
     /// All the fields of this struct to export
@@ -51,11 +57,11 @@ pub struct StateStruct {
 }
 
 /// The field of a struct
-#[cfg_attr(feature = "extra-traits", derive(Debug, PartialEq, Eq))]
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
 #[derive(Clone)]
 pub struct StateStructField {
     /// The name of the field in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the field in code
     pub name: String,
     /// The name of the struct this field is part of
@@ -69,7 +75,7 @@ pub struct StateStructField {
 #[derive(Clone)]
 pub struct ActorImplementation {
     /// The name of the implementation in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the implementation in code
     pub name: String,
     /// The internal dispatch method selected for the actor
@@ -83,7 +89,7 @@ pub struct ActorImplementation {
 #[derive(Clone)]
 pub struct ActorEntryPoint {
     /// The name of the method in Rust code
-    pub rust_name: syn::Member,
+    pub rust_name: TokenStream,
     /// The name of the method in code
     pub name: String,
     /// The internal entry point value specified for the method
@@ -118,4 +124,14 @@ pub struct MethodArgument {
     pub mutable: bool,
     /// The internal entry point value specified for the method
     pub arg_type: TokenStream,
+}
+
+/// Information about a Struct being used as a payload object
+#[cfg_attr(feature = "extra-traits", derive(Debug))]
+#[derive(Clone)]
+pub struct PayloadStruct {
+    /// The name of the struct in Rust code
+    pub rust_name: TokenStream,
+    /// The name of the struct for the SDK
+    pub name: String,
 }

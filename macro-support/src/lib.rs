@@ -1,7 +1,6 @@
 //! The `macro-support` is responsible for the logic coordination behind the Filecoin Virtual Machine
 //! macros
 
-extern crate core;
 extern crate fvm_rs_sdk_backend as backend;
 extern crate proc_macro2;
 extern crate quote;
@@ -15,12 +14,14 @@ use crate::state::attrs::StateAttrs;
 
 mod actor;
 mod export;
+mod payload;
 mod state;
 mod utils;
 
 pub enum MacroType {
     State,
     Actor,
+    Payload,
 }
 
 /// Takes the parsed input from a procedural macro and returns the generated bindings
@@ -49,6 +50,9 @@ pub fn expand(
             let attrs: ActorAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
+        }
+        MacroType::Payload => {
+            item.macro_parse(&mut program, &mut tokens)?;
         }
     }
 

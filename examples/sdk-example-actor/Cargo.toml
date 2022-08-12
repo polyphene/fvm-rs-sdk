@@ -13,6 +13,3 @@ wasm-builder = "3.0.1"
 
 [patch.crates-io]
 fvm_rs_sdk = { path = "../../sdk" }
-fvm_ipld_encoding = { path = "../../ref-fvm/ipld/encoding" }
-fvm_shared = { path = "../../ref-fvm/shared" }
-fvm_ipld_blockstore = { path = "../../ref-fvm/ipld/blockstore" }

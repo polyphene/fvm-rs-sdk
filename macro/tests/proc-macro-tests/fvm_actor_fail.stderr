@@ -36,7 +36,7 @@ error: a pointer type, '* mut u64', can not be used as a type for an entry point
    |
    = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error: 'add' can not be used as an entry point. Methods with #[fvm_export] should be public.
+error: the never type, '!', can not be used as a type for an entry point argument.
   --> tests/proc-macro-tests/fvm_actor_fail.rs:57:1
    |
 57 | #[fvm_actor]
@@ -44,18 +44,10 @@ error: 'add' can not be used as an entry point. Methods with #[fvm_export] shoul
    |
    = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error: the never type, '!', can not be used as a type for an entry point argument.
+error: a slice type, '[u64]', can not be used as a type for an entry point argument.
   --> tests/proc-macro-tests/fvm_actor_fail.rs:66:1
    |
 66 | #[fvm_actor]
-   | ^^^^^^^^^^^^
-   |
-   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error: a slice type, '[u64]', can not be used as a type for an entry point argument.
-  --> tests/proc-macro-tests/fvm_actor_fail.rs:75:1
-   |
-75 | #[fvm_actor]
    | ^^^^^^^^^^^^
    |
    = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)

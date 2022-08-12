@@ -177,13 +177,13 @@ mod tests {
                 let mut fields = Vec::new();
                 for field in s.fields.iter_mut() {
                     // Derive field name from ident
-                    let (name, member) = match &field.ident {
-                        Some(ident) => (ident.to_string(), syn::Member::Named(ident.clone())),
+                    let (name, token_stream) = match &field.ident {
+                        Some(ident) => (ident.to_string(), ident.to_token_stream().clone()),
                         _ => unreachable!(),
                     };
 
                     fields.push(ast::StateStructField {
-                        rust_name: member,
+                        rust_name: token_stream,
                         name,
                         struct_name: s.ident.clone(),
                         ty: field.ty.clone(),
@@ -191,7 +191,7 @@ mod tests {
                 }
 
                 let ast_struct = ast::StateStruct {
-                    rust_name: s.ident.clone(),
+                    rust_name: s.ident.to_token_stream(),
                     name: s.ident.to_string(),
                     fields,
                     codec: DagCbor,
@@ -201,6 +201,7 @@ mod tests {
                 let program = ast::Program {
                     state_structs: vec![ast_struct],
                     actor_implementation: None,
+                    payload_structs: vec![],
                 };
 
                 program.try_to_tokens(&mut token_stream).unwrap();

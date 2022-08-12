@@ -12,7 +12,7 @@ pub struct MockStruct1 {
 #[fvm_actor]
 impl<T> MockStruct1 {
     #[fvm_export(binding = 1)]
-    fn add(&mut self, a: T) {
+    pub fn add(&mut self, a: T) {
         self.count += T.count
     }
 }
@@ -50,15 +50,6 @@ impl MockStruct1 {
     #[fvm_export(binding = 1)]
     pub fn add(&mut self, a: *mut u64) {
         todo!()
-    }
-}
-
-// Fail because private method
-#[fvm_actor]
-impl MockStruct1 {
-    #[fvm_export(binding = 1)]
-    fn add(&mut self, a: u64) {
-        self.count += a;
     }
 }
 
