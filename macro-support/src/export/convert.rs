@@ -5,11 +5,14 @@ use backend::actor::attrs::Dispatch;
 use backend::ast::Mutability;
 use backend::export::attrs::Binding;
 use backend::{ast, Diagnostic};
-use syn::{FnArg, ReturnType, Visibility};
+use proc_macro2::TokenStream;
+use quote::ToTokens;
+use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type};
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
-    GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding, VisbilityNotPublic,
+    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding,
+    UnexpectedArgReceiver, UnexpectedArgType, UnhandledType,
 };
 
 impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod {
@@ -25,16 +28,6 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                 "{}",
                 GenericsOnEntryPoint(self.sig.ident.to_string())
             )));
-        }
-        // Visibility should be public
-        match &self.vis {
-            Visibility::Public(_) => {}
-            _ => {
-                return Err(Diagnostic::error(format!(
-                    "{}",
-                    VisbilityNotPublic(self.sig.ident.to_string())
-                )))
-            }
         }
 
         // Get binding value
@@ -55,6 +48,12 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             },
             None => Mutability::Pure,
         };
+
+        let mut arguments = vec![];
+        for input in self.sig.inputs.iter().skip(1) {
+            arguments.push(input.convert(())?)
+        }
+
         // Check if there is a returned value
         let returns = match self.sig.output {
             ReturnType::Default => false,
@@ -68,25 +67,202 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                 match binding_value {
                     // For numeric dispatch we expect an integer value
                     Binding::Numeric(value) => Ok(ast::ActorEntryPoint {
-                        rust_name: syn::Member::Named(self.sig.ident.clone()),
+                        rust_name: self.sig.ident.to_token_stream(),
                         name: self.sig.ident.to_string(),
                         binding: Binding::Numeric(*value),
                         mutability,
                         returns,
+                        arguments,
                     }),
                     // Allow unreachable patters for future evolutions
                     #[allow(unreachable_patterns)]
+                    _ => Err(Diagnostic::error(format!(
+                        "{}",
+                        MismatchedDispatchBinding(self.sig.ident.to_string(), String::from("u64"))
+                    ))),
+                }
+            }
+        }
+    }
+}
+
+impl<'a> ConvertToAst<()> for &'a FnArg {
+    type Target = ast::MethodArgument;
+
+    fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
+        match self {
+            FnArg::Typed(pat_type) => {
+                let (mutable, name) = match pat_type.pat.as_ref() {
+                    Pat::Ident(i) => (i.mutability.is_some(), i.ident.to_string()),
                     _ => {
                         return Err(Diagnostic::error(format!(
                             "{}",
-                            MismatchedDispatchBinding(
-                                self.sig.ident.to_string(),
-                                String::from("u64")
+                            ExpectedBindingToNewVariable
+                        )))
+                    }
+                };
+
+                let arg_type = pat_type.ty.as_ref().convert(())?;
+
+                Ok(ast::MethodArgument {
+                    name,
+                    mutable,
+                    arg_type,
+                })
+            }
+            FnArg::Receiver(_) => Err(Diagnostic::error(format!("{}", UnexpectedArgReceiver))),
+        }
+    }
+}
+
+impl<'a> ConvertToAst<()> for &'a Type {
+    type Target = TokenStream;
+
+    fn convert(self, _: ()) -> Result<Self::Target, Diagnostic> {
+        match self {
+            Type::Array(a) => {
+                let _ = a.elem.as_ref().convert(())?;
+
+                Ok(a.to_token_stream())
+            }
+            Type::Paren(p) => {
+                let _ = p.elem.as_ref().convert(())?;
+
+                Ok(p.to_token_stream())
+            }
+            Type::Path(p) => {
+                match &p.path.segments.last().unwrap().arguments {
+                    PathArguments::None => {}
+                    PathArguments::AngleBracketed(b) => {
+                        for arg in b.args.iter() {
+                            match arg {
+                                GenericArgument::Lifetime(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a type with specified lifetime"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                                GenericArgument::Type(t) => {
+                                    let _ = t.convert(())?;
+                                }
+                                GenericArgument::Binding(b) => {
+                                    let _ = &b.ty.convert(())?;
+                                }
+                                GenericArgument::Constraint(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a constraint type"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                                GenericArgument::Const(_) => {
+                                    return Err(Diagnostic::error(format!(
+                                        "{}",
+                                        UnexpectedArgType(
+                                            String::from("a const expression"),
+                                            p.to_token_stream().to_string()
+                                        )
+                                    )))
+                                }
+                            }
+                        }
+                    }
+                    PathArguments::Parenthesized(_) => {
+                        return Err(Diagnostic::error(format!(
+                            "{}",
+                            UnexpectedArgType(
+                                String::from("arguments of a function path segment"),
+                                p.to_token_stream().to_string()
                             )
                         )))
                     }
                 }
+                Ok(p.to_token_stream())
             }
+            Type::Tuple(t) => {
+                for elem in t.elems.iter() {
+                    let _ = elem.convert(())?;
+                }
+
+                Ok(t.to_token_stream())
+            }
+            Type::BareFn(b) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a bare function type"),
+                    b.to_token_stream().to_string()
+                )
+            ))),
+            Type::Group(g) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a type contained within invisible delimiters"),
+                    g.to_token_stream().to_string()
+                )
+            ))),
+            Type::ImplTrait(i) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("an impl type"),
+                    i.to_token_stream().to_string()
+                )
+            ))),
+            Type::Infer(i) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("the infer type"),
+                    i.to_token_stream().to_string()
+                )
+            ))),
+            Type::Macro(m) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(String::from("a macro"), m.to_token_stream().to_string())
+            ))),
+            Type::Never(n) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("the never type"),
+                    n.to_token_stream().to_string()
+                )
+            ))),
+            Type::Ptr(p) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a pointer type"),
+                    p.to_token_stream().to_string()
+                )
+            ))),
+            Type::Reference(r) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a referenced type"),
+                    r.to_token_stream().to_string()
+                )
+            ))),
+            Type::Slice(s) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a slice type"),
+                    s.to_token_stream().to_string()
+                )
+            ))),
+            Type::TraitObject(t) => Err(Diagnostic::error(format!(
+                "{}",
+                UnexpectedArgType(
+                    String::from("a trait object type"),
+                    t.to_token_stream().to_string()
+                )
+            ))),
+            Type::Verbatim(v) => Err(Diagnostic::error(format!(
+                "{}",
+                UnhandledType(v.to_string())
+            ))),
+            _ => unreachable!(),
         }
     }
 }
@@ -121,7 +297,7 @@ mod tests {
                 }
 
                 #[fvm_export(binding=3)]
-                pub fn read(&self, value: u64) -> u64 {
+                pub fn read(&self) -> u64 {
                     self.count
                 }
             }
@@ -145,7 +321,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_entry_points = &program.actor_implementation[0].entry_points;
+        let actor_entry_points = &program.actor_implementation.unwrap().entry_points;
         assert_eq!(actor_entry_points.len(), 3);
 
         assert_eq!(actor_entry_points[0].name, String::from("new"));
@@ -292,47 +468,6 @@ mod tests {
             )
         } else {
             panic!("unknown attribute on #[fvm_export] should throw an error")
-        }
-    }
-
-    #[test]
-    fn method_not_public() {
-        // Mock impl token stream
-        let mut struct_token_stream = TokenStream::new();
-
-        (quote! {
-            impl Actor {
-                #[fvm_export(binding=1)]
-                fn new() -> Self {
-                    Actor {
-                        count: 0
-                    }
-                }
-            }
-        })
-        .to_tokens(&mut struct_token_stream);
-
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
-        // Parse struct and attrs
-        let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
-
-        let mut tokens = TokenStream::new();
-        let mut program = backend::ast::Program::default();
-
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            assert_eq!(
-                err.to_token_stream().to_string(),
-                "compile_error ! { \"'new' can not be used as an entry point. Methods with #[fvm_export] should be public.\" }"
-            )
-        } else {
-            panic!("non public method with #[fvm_export] should throw an error")
         }
     }
 

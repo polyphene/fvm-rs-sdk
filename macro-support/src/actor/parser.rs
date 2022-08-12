@@ -31,21 +31,10 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
 
         // Get impl name & ident
         let (rust_name, name) = match self.self_ty.as_ref() {
-            Type::Path(type_path) => {
-                let path_ident = match type_path.path.get_ident() {
-                    Some(ident) => ident.clone(),
-                    None => {
-                        return Err(Diagnostic::error(format!(
-                            "{}",
-                            UnexpectedImplementationType
-                        )))
-                    }
-                };
-                (
-                    syn::Member::Named(path_ident.clone()),
-                    path_ident.to_string(),
-                )
-            }
+            Type::Path(type_path) => (
+                type_path.path.to_token_stream(),
+                type_path.path.to_token_stream().to_string(),
+            ),
             _ => {
                 return Err(Diagnostic::error(format!(
                     "{}",
@@ -63,12 +52,9 @@ impl<'a> ConvertToAst<ActorAttrs> for &'a mut syn::ItemImpl {
                 let filtered_attributes: Vec<&Attribute> = m
                     .attrs
                     .iter()
-                    .filter(|a| {
-                        a.path
-                            .get_ident()
-                            .unwrap()
-                            .to_string()
-                            .contains("fvm_export")
+                    .filter(|a| match a.path.segments.last() {
+                        Some(s) => s.to_token_stream().to_string().contains("fvm_export"),
+                        None => false,
                     })
                     .collect::<Vec<&Attribute>>();
                 if filtered_attributes.is_empty() {
@@ -104,7 +90,7 @@ impl<'a> MacroParse<(Option<ActorAttrs>, &'a mut TokenStream)> for syn::Item {
         match self {
             Item::Impl(mut i) => {
                 let attrs = attrs.unwrap_or_default();
-                program.actor_implementation.push((&mut i).convert(attrs)?);
+                program.actor_implementation = Some((&mut i).convert(attrs)?);
                 i.to_tokens(tokens);
             }
             _ => {
@@ -156,7 +142,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_implementation: &ActorImplementation = &program.actor_implementation[0];
+        let actor_implementation: &ActorImplementation = &program.actor_implementation.unwrap();
 
         assert_eq!(actor_implementation.dispatch, Dispatch::Numeric);
         assert_eq!(actor_implementation.name, String::from("Actor"));
@@ -191,7 +177,7 @@ mod tests {
         item.macro_parse(&mut program, (Some(attrs), &mut tokens))
             .unwrap();
 
-        let actor_implementation: &ActorImplementation = &program.actor_implementation[0];
+        let actor_implementation: &ActorImplementation = &program.actor_implementation.unwrap();
 
         assert_eq!(actor_implementation.dispatch, Dispatch::Numeric);
     }
@@ -259,46 +245,6 @@ mod tests {
             )
         } else {
             panic!("implementation with generics and #[fvm_actor] should cause an error")
-        }
-    }
-
-    #[test]
-    fn implementation_with_unexpected_ident() {
-        // Mock impl token stream
-        let mut struct_token_stream = TokenStream::new();
-
-        (quote! {
-            impl crate::state::Actor {
-                pub fn new() -> Self {
-                    Actor {
-                        count: 0
-                    }
-                }
-            }
-        })
-        .to_tokens(&mut struct_token_stream);
-
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
-        // Parse struct and attrs
-        let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
-
-        let mut tokens = TokenStream::new();
-        let mut program = backend::ast::Program::default();
-
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            assert_eq!(
-                err.to_token_stream().to_string(),
-                "compile_error ! { \"expected implementation for type with no leading colon, 1 path segment, and no angle bracketed or parenthesized path arguments with #[fvm_actor]\" }"
-            )
-        } else {
-            panic!("implementation with improper path identity should cause an error")
         }
     }
 }

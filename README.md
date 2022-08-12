@@ -93,8 +93,15 @@ The procedural macro to annotate your actor's interface can be found in the `act
 use fvm_rs_sdk::actor::fvm_actor;
 ```
 
-- This macro will parse the annotated implementation and generate a proper `invoke()` function that will become the 
+This macro will parse the annotated implementation and generate a proper `invoke()` function that will become the 
 entry point of your actor.
+
+_Limitations_
+- The implementation with `#[fvm_actor]` have to be the implementation of the structure with `#[fvm_state]`. 
+- Only one implementation can be written with `#[fvm_actor]` as it will generate compilation conflicts otherwise (multiple
+`invoke()` functions declared).
+- Currently, the only dispatch method handled is `method-num`.
+- Implementation with generics or lifetime are not supported.
 
 ### `fvm_export`
 
@@ -103,6 +110,12 @@ can be accessed in the `actor` module:
 ```rust
 use fvm_rs_sdk::actor::fvm_export;
 ```
+
+_Limitations_
+- When specifying an export it has to be used with the `binding` attribute to specify its internal dispatch value (e.g.: `#[fvm_export(binding=1)]`)
+- A method annotated with `#[fvm_export]` has to be public.
+- Methods with generic types or lifetimes as arguments or return are not supported.
+- Only a "few" types are supported. The list can be found [here](https://github.com/polyphene/fvm-rs-sdk-private/blob/feature/invoke-glue-code/macro-support/src/export/convert.rs#L158-L285).
 
 ## License
 

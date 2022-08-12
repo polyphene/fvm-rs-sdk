@@ -1,16 +1,16 @@
-error: structure with #[fvm_state] cannot have lifetime or type parameters.
- --> tests/proc-macro-tests/fvm_state_fail.rs:4:1
+error: structure with #[fvm_payload] cannot have lifetime or type parameters.
+ --> tests/proc-macro-tests/fvm_payload_fail.rs:4:1
   |
-4 | #[fvm_state]
-  | ^^^^^^^^^^^^
+4 | #[fvm_payload]
+  | ^^^^^^^^^^^^^^
   |
-  = note: this error originates in the attribute macro `fvm_state` (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the attribute macro `fvm_payload` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Serialize` is not satisfied
-   --> tests/proc-macro-tests/fvm_state_fail.rs:9:1
+   --> tests/proc-macro-tests/fvm_payload_fail.rs:9:1
     |
-9   | #[fvm_state]
-    | ^^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Serialize` is not implemented for `InnerStruct`
+9   | #[fvm_payload]
+    | ^^^^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Serialize` is not implemented for `InnerStruct`
     |
     = help: the following other types implement trait `fvm_rs_sdk::payload::serde::Serialize`:
               &'a T
@@ -31,7 +31,7 @@ note: required by a bound in `serialize_newtype_struct`
     = note: this error originates in the derive macro `fvm_rs_sdk::encoding::tuple::Serialize_tuple` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Deserialize<'_>` is not satisfied
-  --> tests/proc-macro-tests/fvm_state_fail.rs:11:16
+  --> tests/proc-macro-tests/fvm_payload_fail.rs:11:16
    |
 11 |     pub inner: InnerStruct,
    |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Deserialize<'_>` is not implemented for `InnerStruct`
@@ -48,7 +48,7 @@ error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Deserial
            and 206 others
 
 error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Deserialize<'_>` is not satisfied
-    --> tests/proc-macro-tests/fvm_state_fail.rs:11:16
+    --> tests/proc-macro-tests/fvm_payload_fail.rs:11:16
      |
 11   |     pub inner: InnerStruct,
      |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Deserialize<'_>` is not implemented for `InnerStruct`

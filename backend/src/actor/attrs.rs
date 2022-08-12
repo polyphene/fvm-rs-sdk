@@ -32,7 +32,7 @@ impl Parse for ActorAttr {
         let attr: AnyIdent = input.parse()?;
         let attr = attr.0;
 
-        return match ActorAttr::try_from(attr.to_string()) {
+        match ActorAttr::try_from(attr.to_string()) {
             Ok(ActorAttr::Dispatch(_)) => {
                 input.parse::<syn::token::Eq>()?;
                 let val = match input.parse::<syn::LitStr>() {
@@ -48,7 +48,7 @@ impl Parse for ActorAttr {
                 Ok(ActorAttr::Dispatch(val))
             }
             Err(err) => Err(original.error(format!("{}", err))),
-        };
+        }
     }
 }
 

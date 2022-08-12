@@ -20,6 +20,7 @@ macro_rules! generate_proc_macro {
 
 generate_proc_macro!(fvm_state, MacroType::State);
 generate_proc_macro!(fvm_actor, MacroType::Actor);
+generate_proc_macro!(fvm_payload, MacroType::Payload);
 
 #[proc_macro_attribute]
 pub fn fvm_export(_attr: TokenStream, input: TokenStream) -> TokenStream {

@@ -1,0 +1,18 @@
+[package]
+name = "fil_fungible_token"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fvm_rs_sdk = "0.1.0"
+num-traits = { version = "0.2.15" }
+thiserror = { version = "1.0.31" }
+
+[build-dependencies]
+wasm-builder = "3.0.1"
+
+[patch.crates-io]
+fvm_rs_sdk = { path = "../../sdk" }
+fvm_ipld_encoding = { path = "../../ref-fvm/ipld/encoding" }
+fvm_shared = { path = "../../ref-fvm/shared" }
+fvm_ipld_blockstore = { path = "../../ref-fvm/ipld/blockstore" }

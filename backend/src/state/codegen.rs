@@ -3,33 +3,8 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 
-use crate::{ast, Diagnostic};
-
-/// A trait for converting AST structs into Tokens and adding them to a TokenStream,
-/// or providing a diagnostic if conversion fails.
-pub trait TryToTokens {
-    /// Attempt to convert a `Self` into tokens and add it to the `TokenStream`
-    fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic>;
-
-    /// Attempt to convert a `Self` into a new `TokenStream`
-    fn try_to_token_stream(&self) -> Result<TokenStream, Diagnostic> {
-        let mut tokens = TokenStream::new();
-        self.try_to_tokens(&mut tokens)?;
-        Ok(tokens)
-    }
-}
-
-impl TryToTokens for ast::Program {
-    // Generate wrappers for all the items that we've found
-    fn try_to_tokens(&self, into: &mut TokenStream) -> Result<(), Diagnostic> {
-        // Handling tagged structures
-        for s in self.state_structs.iter() {
-            s.to_tokens(into);
-        }
-
-        Ok(())
-    }
-}
+use crate::ast;
+use crate::state::attrs::Codec;
 
 impl ToTokens for ast::StateStruct {
     fn to_tokens(&self, into: &mut TokenStream) {
@@ -41,7 +16,68 @@ impl ToTokens for ast::StateStruct {
         })
             .to_token_stream();
 
-        self.generate_state_interface().to_tokens(into)
+        match self.codec {
+            Codec::DagCbor => {
+                let name = &self.rust_name;
+                quote!(
+                    impl fvm_rs_sdk::state::StateObject for #name {
+                        fn load() -> Self {
+                            use fvm_rs_sdk::encoding::CborStore;
+                            // First, load the current state root.
+                            let root = match fvm_rs_sdk::syscall::sself::root() {
+                                Ok(root) => root,
+                                Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                                    Some(format!("failed to get root: {:?}", err).as_str()),
+                                ),
+                            };
+
+                            // Load the actor state from the state tree.
+                            match fvm_rs_sdk::state::cbor::CborBlockstore.get_cbor::<Self>(&root) {
+                                Ok(Some(state)) => state,
+                                Ok(None) => fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                                    Some("state does not exist"),
+                                ),
+                                Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                                    Some(format!("failed to get state: {}", err).as_str()),
+                                ),
+                            }
+                        }
+
+                        fn save(&self) -> fvm_rs_sdk::cid::Cid {
+                            let serialized = match fvm_rs_sdk::encoding::to_vec(self) {
+                                Ok(s) => s,
+                                Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
+                                    Some(format!("failed to serialize state: {:?}", err).as_str()),
+                                ),
+                            };
+                            let cid = match fvm_rs_sdk::syscall::ipld::put(
+                                fvm_rs_sdk::cid::Code::Blake2b256.into(),
+                                fvm_rs_sdk::state::cbor::SIZE,
+                                fvm_rs_sdk::encoding::DAG_CBOR,
+                                serialized.as_slice(),
+                            ) {
+                                Ok(cid) => cid,
+                                Err(err) => fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_SERIALIZATION.value(),
+                                    Some(format!("failed to store initial state: {:}", err).as_str()),
+                                ),
+                            };
+                            if let Err(err) = fvm_rs_sdk::syscall::sself::set_root(&cid) {
+                                fvm_rs_sdk::syscall::vm::abort(
+                                    fvm_rs_sdk::shared::error::ExitCode::USR_ILLEGAL_STATE.value(),
+                                    Some(format!("failed to set root cid: {:}", err).as_str()),
+                                );
+                            }
+                            cid
+                        }
+                    }
+                ).to_tokens(into);
+            }
+        }
     }
 }
 
@@ -49,6 +85,7 @@ impl ToTokens for ast::StateStruct {
 mod tests {
     use super::*;
     use crate::state::attrs::Codec::DagCbor;
+    use crate::TryToTokens;
 
     #[test]
     fn basic_struct() {
@@ -98,7 +135,7 @@ mod tests {
                     };
                     let cid = match fvm_rs_sdk::syscall::ipld::put(
                         fvm_rs_sdk::cid::Code::Blake2b256.into(),
-                        32,
+                        fvm_rs_sdk::state::cbor::SIZE,
                         fvm_rs_sdk::encoding::DAG_CBOR,
                         serialized.as_slice(),
                     ) {
@@ -140,13 +177,13 @@ mod tests {
                 let mut fields = Vec::new();
                 for field in s.fields.iter_mut() {
                     // Derive field name from ident
-                    let (name, member) = match &field.ident {
-                        Some(ident) => (ident.to_string(), syn::Member::Named(ident.clone())),
+                    let (name, token_stream) = match &field.ident {
+                        Some(ident) => (ident.to_string(), ident.to_token_stream().clone()),
                         _ => unreachable!(),
                     };
 
                     fields.push(ast::StateStructField {
-                        rust_name: member,
+                        rust_name: token_stream,
                         name,
                         struct_name: s.ident.clone(),
                         ty: field.ty.clone(),
@@ -154,7 +191,7 @@ mod tests {
                 }
 
                 let ast_struct = ast::StateStruct {
-                    rust_name: s.ident.clone(),
+                    rust_name: s.ident.to_token_stream(),
                     name: s.ident.to_string(),
                     fields,
                     codec: DagCbor,
@@ -163,7 +200,8 @@ mod tests {
                 // Create ast::Program
                 let program = ast::Program {
                     state_structs: vec![ast_struct],
-                    actor_implementation: vec![],
+                    actor_implementation: None,
+                    payload_structs: vec![],
                 };
 
                 program.try_to_tokens(&mut token_stream).unwrap();
