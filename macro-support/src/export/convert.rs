@@ -76,15 +76,10 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                     }),
                     // Allow unreachable patters for future evolutions
                     #[allow(unreachable_patterns)]
-                    _ => {
-                        return Err(Diagnostic::error(format!(
-                            "{}",
-                            MismatchedDispatchBinding(
-                                self.sig.ident.to_string(),
-                                String::from("u64")
-                            )
-                        )))
-                    }
+                    _ => Err(Diagnostic::error(format!(
+                        "{}",
+                        MismatchedDispatchBinding(self.sig.ident.to_string(), String::from("u64"))
+                    ))),
                 }
             }
         }
@@ -115,9 +110,7 @@ impl<'a> ConvertToAst<()> for &'a FnArg {
                     arg_type,
                 })
             }
-            FnArg::Receiver(_) => {
-                return Err(Diagnostic::error(format!("{}", UnexpectedArgReceiver)))
-            }
+            FnArg::Receiver(_) => Err(Diagnostic::error(format!("{}", UnexpectedArgReceiver))),
         }
     }
 }
