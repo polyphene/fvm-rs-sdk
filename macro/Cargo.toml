@@ -1,6 +1,6 @@
 [package]
 name = "fvm_rs_sdk_macro"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -13,8 +13,8 @@ proc-macro = true
 
 [dependencies]
 quote = "^1.0.9"
-fvm_rs_sdk_macro_support = { path="../macro-support", version="0.1.0" }
+fvm_rs_sdk_macro_support = { path="../macro-support", version="1.0.0" }
 
 [dev-dependencies]
 trybuild = "^1.0.63"
-fvm_rs_sdk = { path="../sdk", version="0.1.0" }
+fvm_rs_sdk = { path="../sdk", version="1.0.0" }

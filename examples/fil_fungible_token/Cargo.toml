@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-fvm_rs_sdk = "0.1.0"
+fvm_rs_sdk = "1.0.0"
 num-traits = { version = "0.2.15" }
 thiserror = { version = "1.0.31" }
 
