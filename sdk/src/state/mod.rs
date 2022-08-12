@@ -2,9 +2,10 @@
 pub mod cbor;
 mod error;
 
-pub use crate::encoding::{serde, tuple::serde_tuple};
 use cid::Cid;
 pub use fvm_ipld_blockstore::{Block, Blockstore};
+pub use fvm_ipld_encoding::serde;
+pub use fvm_ipld_encoding::tuple::serde_tuple;
 pub use fvm_rs_sdk_macro::fvm_state;
 
 /// StateObject is a trait to read and write an actor's state on the Filecoin Virtual Machine

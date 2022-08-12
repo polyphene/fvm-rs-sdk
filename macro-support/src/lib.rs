@@ -14,12 +14,14 @@ use crate::state::attrs::StateAttrs;
 
 mod actor;
 mod export;
+mod payload;
 mod state;
 mod utils;
 
 pub enum MacroType {
     State,
     Actor,
+    Payload,
 }
 
 /// Takes the parsed input from a procedural macro and returns the generated bindings
@@ -48,6 +50,9 @@ pub fn expand(
             let attrs: ActorAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
+        }
+        MacroType::Payload => {
+            item.macro_parse(&mut program, &mut tokens)?;
         }
     }
 

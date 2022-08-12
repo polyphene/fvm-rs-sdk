@@ -4,11 +4,12 @@ members = [
     "sdk",
     "macro",
     "backend",
-    "macro-support"
+    "macro-support",
 ]
 
 exclude = [
-    "examples/sdk-example-actor"
+    "examples/sdk-example-actor",
+    "examples/fil_fungible_token"
 ]
 
 [patch.crates-io]

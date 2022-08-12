@@ -7,12 +7,12 @@ use backend::export::attrs::Binding;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type, Visibility};
+use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type};
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
     ExpectedBindingToNewVariable, GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding,
-    UnexpectedArgReceiver, UnexpectedArgType, UnhandledType, VisbilityNotPublic,
+    UnexpectedArgReceiver, UnexpectedArgType, UnhandledType,
 };
 
 impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod {
@@ -28,16 +28,6 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
                 "{}",
                 GenericsOnEntryPoint(self.sig.ident.to_string())
             )));
-        }
-        // Visibility should be public
-        match &self.vis {
-            Visibility::Public(_) => {}
-            _ => {
-                return Err(Diagnostic::error(format!(
-                    "{}",
-                    VisbilityNotPublic(self.sig.ident.to_string())
-                )))
-            }
         }
 
         // Get binding value
@@ -485,47 +475,6 @@ mod tests {
             )
         } else {
             panic!("unknown attribute on #[fvm_export] should throw an error")
-        }
-    }
-
-    #[test]
-    fn method_not_public() {
-        // Mock impl token stream
-        let mut struct_token_stream = TokenStream::new();
-
-        (quote! {
-            impl Actor {
-                #[fvm_export(binding=1)]
-                fn new() -> Self {
-                    Actor {
-                        count: 0
-                    }
-                }
-            }
-        })
-        .to_tokens(&mut struct_token_stream);
-
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
-        // Parse struct and attrs
-        let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
-
-        let mut tokens = TokenStream::new();
-        let mut program = backend::ast::Program::default();
-
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
-            assert_eq!(
-                err.to_token_stream().to_string(),
-                "compile_error ! { \"'new' can not be used as an entry point. Methods with #[fvm_export] should be public.\" }"
-            )
-        } else {
-            panic!("non public method with #[fvm_export] should throw an error")
         }
     }
 
