@@ -3,21 +3,11 @@
 use backend::state::attrs::Codec;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 
 use crate::state::attrs::StateAttrs;
-
-/// Conversion trait with context.
-///
-/// Used to convert syn tokens into an AST, that we can then use to generate glue code.
-trait ConvertToAst<Ctx> {
-    /// What we are converting to.
-    type Target;
-    /// Convert into our target.
-    ///
-    /// Since this is used in a procedural macro, use panic to fail.
-    fn convert(self, context: Ctx) -> Result<Self::Target, Diagnostic>;
-}
+use crate::state::error::Error::{ExpectedStructure, GenericsOnStructure};
+use crate::utils::{ConvertToAst, MacroParse};
 
 impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
     type Target = ast::StateStruct;
@@ -25,10 +15,7 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
     fn convert(self, attrs: StateAttrs) -> Result<Self::Target, Diagnostic> {
         // No lifetime to make sure that we can handle it correctly
         if !self.generics.params.is_empty() {
-            bail_span!(
-                self.generics,
-                "structs with #[fvm_state] cannot have lifetime or type parameters"
-            );
+            return Err(Diagnostic::error(format!("{}", GenericsOnStructure)));
         }
 
         // When handling struct, first create fields objects
@@ -41,13 +28,13 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
             }
 
             // Derive field name from ident
-            let (name, member) = match &field.ident {
-                Some(ident) => (ident.to_string(), syn::Member::Named(ident.clone())),
-                None => (i.to_string(), syn::Member::Unnamed(i.into())),
+            let (name, token_stream) = match &field.ident {
+                Some(ident) => (ident.to_string(), ident.to_token_stream().clone()),
+                None => (i.to_string(), quote!(#i).to_token_stream()),
             };
 
             fields.push(ast::StateStructField {
-                rust_name: member,
+                rust_name: token_stream,
                 name,
                 struct_name: self.ident.clone(),
                 ty: field.ty.clone(),
@@ -62,20 +49,12 @@ impl<'a> ConvertToAst<StateAttrs> for &'a mut syn::ItemStruct {
 
         // Generate the AST object for the Struct
         Ok(ast::StateStruct {
-            rust_name: self.ident.clone(),
+            rust_name: self.ident.to_token_stream(),
             name: self.ident.to_string(),
             fields,
             codec,
         })
     }
-}
-
-pub(crate) trait MacroParse<Ctx> {
-    /// Parse the contents of an object into our AST, with a context if necessary.
-    ///
-    /// The context is used to have access to the attributes on `#[fvm_state]`, and to allow
-    /// writing to the output `TokenStream`.
-    fn macro_parse(self, program: &mut ast::Program, context: Ctx) -> Result<(), Diagnostic>;
 }
 
 impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
@@ -86,14 +65,14 @@ impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
     ) -> Result<(), Diagnostic> {
         // Match of Item types to parse & generate our AST
         match self {
-            // Handles strcutures
+            // Handles structures
             syn::Item::Struct(mut s) => {
                 let attrs = attrs.unwrap_or_default();
                 program.state_structs.push((&mut s).convert(attrs)?);
                 s.to_tokens(tokens);
             }
             _ => {
-                bail_span!(self, "#[fvm_state] can only be applied to a public struct",);
+                return Err(Diagnostic::error(format!("{}", ExpectedStructure)));
             }
         }
 
@@ -105,7 +84,7 @@ impl<'a> MacroParse<(Option<StateAttrs>, &'a mut TokenStream)> for syn::Item {
 mod tests {
     use backend::state::attrs::Codec;
     use quote::quote;
-    use syn::{Member, Type};
+    use syn::Type;
 
     use super::*;
 
@@ -126,7 +105,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -154,12 +133,7 @@ mod tests {
                 panic!("count type should be path")
             }
         }
-        match &parsed_field.rust_name {
-            Member::Named(ident) => {
-                assert_eq!(ident.to_string(), parsed_field.name);
-            }
-            _ => panic!("parsed struct field rust name should be named"),
-        }
+        assert_eq!(parsed_field.rust_name.to_string(), parsed_field.name);
     }
 
     #[test]
@@ -179,7 +153,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -190,14 +164,12 @@ mod tests {
             Err(diagnostic) => {
                 let res_panic = std::panic::catch_unwind(|| diagnostic.panic());
                 match res_panic {
-                    Err(err) => {
-                        match err.downcast::<String>() {
-                            Ok(panic_msg_box) => {
-                                assert_eq!(panic_msg_box.as_str(), "structs with #[fvm_state] cannot have lifetime or type parameters");
-                            }
-                            Err(_) => unreachable!(),
+                    Err(err) => match err.downcast::<String>() {
+                        Ok(panic_msg_box) => {
+                            assert_eq!(panic_msg_box.as_str(), "structure with #[fvm_state] cannot have lifetime or type parameters.");
                         }
-                    }
+                        Err(_) => unreachable!(),
+                    },
                     _ => unreachable!(),
                 }
             }
@@ -223,7 +195,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -259,7 +231,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
@@ -341,7 +313,7 @@ mod tests {
 
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs = syn::parse2(attrs_token_stream).unwrap();
+        let attrs: StateAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();

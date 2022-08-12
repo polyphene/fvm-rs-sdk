@@ -1,16 +1,18 @@
-error: structs with #[fvm_state] cannot have lifetime or type parameters
- --> tests/proc-macro-tests/fvm_state_fail.rs:5:23
+error: structure with #[fvm_state] cannot have lifetime or type parameters.
+ --> tests/proc-macro-tests/fvm_state_fail.rs:4:1
   |
-5 | pub struct MockStruct1<'a> {
-  |                       ^^^^
+4 | #[fvm_state]
+  | ^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `fvm_state` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Serialize` is not satisfied
+error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Serialize` is not satisfied
    --> tests/proc-macro-tests/fvm_state_fail.rs:9:1
     |
 9   | #[fvm_state]
-    | ^^^^^^^^^^^^ the trait `fvm_rs_sdk::state::serde::Serialize` is not implemented for `InnerStruct`
+    | ^^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Serialize` is not implemented for `InnerStruct`
     |
-    = help: the following other types implement trait `fvm_rs_sdk::state::serde::Serialize`:
+    = help: the following other types implement trait `fvm_rs_sdk::payload::serde::Serialize`:
               &'a T
               &'a mut T
               ()
@@ -20,21 +22,21 @@ error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Serialize`
               (T0, T1, T2, T3, T4)
               (T0, T1, T2, T3, T4, T5)
             and 201 others
-    = note: required because of the requirements on the impl of `fvm_rs_sdk::state::serde::Serialize` for `&InnerStruct`
+    = note: required because of the requirements on the impl of `fvm_rs_sdk::payload::serde::Serialize` for `&InnerStruct`
 note: required by a bound in `serialize_newtype_struct`
-   --> $CARGO/serde-1.0.140/src/ser/mod.rs
+   --> $CARGO/serde-1.0.143/src/ser/mod.rs
     |
     |         T: Serialize;
     |            ^^^^^^^^^ required by this bound in `serialize_newtype_struct`
     = note: this error originates in the derive macro `fvm_rs_sdk::encoding::tuple::Serialize_tuple` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Deserialize<'_>` is not satisfied
+error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Deserialize<'_>` is not satisfied
   --> tests/proc-macro-tests/fvm_state_fail.rs:11:16
    |
 11 |     pub inner: InnerStruct,
-   |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::state::serde::Deserialize<'_>` is not implemented for `InnerStruct`
+   |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Deserialize<'_>` is not implemented for `InnerStruct`
    |
-   = help: the following other types implement trait `fvm_rs_sdk::state::serde::Deserialize<'de>`:
+   = help: the following other types implement trait `fvm_rs_sdk::payload::serde::Deserialize<'de>`:
              &'a Path
              &'a [u8]
              &'a fvm_rs_sdk::fvm_ipld_encoding::cs_serde_bytes::Bytes
@@ -45,13 +47,13 @@ error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Deserializ
              (T0, T1, T2)
            and 206 others
 
-error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Deserialize<'_>` is not satisfied
+error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::payload::serde::Deserialize<'_>` is not satisfied
     --> tests/proc-macro-tests/fvm_state_fail.rs:11:16
      |
 11   |     pub inner: InnerStruct,
-     |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::state::serde::Deserialize<'_>` is not implemented for `InnerStruct`
+     |                ^^^^^^^^^^^ the trait `fvm_rs_sdk::payload::serde::Deserialize<'_>` is not implemented for `InnerStruct`
      |
-     = help: the following other types implement trait `fvm_rs_sdk::state::serde::Deserialize<'de>`:
+     = help: the following other types implement trait `fvm_rs_sdk::payload::serde::Deserialize<'de>`:
                &'a Path
                &'a [u8]
                &'a fvm_rs_sdk::fvm_ipld_encoding::cs_serde_bytes::Bytes
@@ -62,7 +64,7 @@ error[E0277]: the trait bound `InnerStruct: fvm_rs_sdk::state::serde::Deserializ
                (T0, T1, T2)
              and 206 others
 note: required by a bound in `next_element`
-    --> $CARGO/serde-1.0.140/src/de/mod.rs
+    --> $CARGO/serde-1.0.143/src/de/mod.rs
      |
      |         T: Deserialize<'de>,
      |            ^^^^^^^^^^^^^^^^ required by this bound in `next_element`

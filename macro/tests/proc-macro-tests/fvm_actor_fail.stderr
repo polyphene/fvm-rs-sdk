@@ -1,0 +1,53 @@
+error: implementation with #[fvm_actor] cannot have lifetime or type parameters.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:12:1
+   |
+12 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a referenced type, '& u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:21:1
+   |
+21 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a bare function type, 'fn(u64) -> u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:30:1
+   |
+30 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: expected attribute arguments in parentheses: #[fvm_export(...)]
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:41:5
+   |
+41 |     #[fvm_export]
+   |     ^^^^^^^^^^^^^
+
+error: a pointer type, '* mut u64', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:48:1
+   |
+48 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: the never type, '!', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:57:1
+   |
+57 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: a slice type, '[u64]', can not be used as a type for an entry point argument.
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:66:1
+   |
+66 | #[fvm_actor]
+   | ^^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
