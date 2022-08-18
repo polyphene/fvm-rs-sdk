@@ -11,7 +11,7 @@ pub struct MockStruct1 {
 // Fail because of generic
 #[fvm_actor]
 impl<T> MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn add(&mut self, a: T) {
         self.count += T.count
     }
@@ -20,7 +20,7 @@ impl<T> MockStruct1 {
 // Fail because of ref
 #[fvm_actor]
 impl MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn add(&mut self, a: &u64) {
         self.count += a;
     }
@@ -29,7 +29,7 @@ impl MockStruct1 {
 // Fail because of bare function type
 #[fvm_actor]
 impl MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn add(&mut self, a: fn(u64) -> u64) {
         self.count += a
     }
@@ -47,7 +47,7 @@ impl MockStruct1 {
 // Fail because pointer type
 #[fvm_actor]
 impl MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn add(&mut self, a: *mut u64) {
         todo!()
     }
@@ -56,7 +56,7 @@ impl MockStruct1 {
 // Fail because never argument type
 #[fvm_actor]
 impl MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn call_never(&mut self, a: !) {
         todo!()
     }
@@ -65,7 +65,25 @@ impl MockStruct1 {
 // Fail because slice argument type
 #[fvm_actor]
 impl MockStruct1 {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
+    pub fn call_never(&mut self, a: Box<[u64]>) {
+        self.count += a[0]
+    }
+}
+
+// Fail because unknown argument
+#[fvm_actor]
+impl MockStruct1 {
+    #[fvm_export(mock = 1)]
+    pub fn call_never(&mut self, a: Box<[u64]>) {
+        self.count += a[0]
+    }
+}
+
+// Fail because wrong value for method num
+#[fvm_actor]
+impl MockStruct1 {
+    #[fvm_export(method_num = "hello")]
     pub fn call_never(&mut self, a: Box<[u64]>) {
         self.count += a[0]
     }

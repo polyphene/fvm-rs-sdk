@@ -1,4 +1,4 @@
-//! Contains attributes available for the `#[fvm_actor]` procedural macro.
+//! Contains attributes available for the `#[fvm_state]` procedural macro.
 
 use std::convert::TryFrom;
 
@@ -6,46 +6,45 @@ use crate::utils::AnyIdent;
 use anyhow::Result;
 use syn::parse::{Parse, ParseStream, Result as SynResult};
 
-use crate::actor::error::Error::{
-    InvalidDispatchMethodFormat, UnknownAttribute, UnkownDispatchMethod,
-};
+use crate::payload::error::Error::{InvalidCodecFormat, UnknownAttribute, UnknownCodec};
 
 #[derive(Clone, Debug)]
-pub enum ActorAttr {
-    Dispatch(Dispatch),
+pub enum PayloadAttr {
+    Codec(Codec),
 }
 
-impl TryFrom<String> for ActorAttr {
-    type Error = crate::actor::error::Error;
+impl TryFrom<String> for PayloadAttr {
+    type Error = crate::payload::error::Error;
 
     fn try_from(attr: String) -> Result<Self, Self::Error> {
         match attr.as_str() {
-            "dispatch" => Ok(ActorAttr::Dispatch(Dispatch::default())),
+            "codec" => Ok(PayloadAttr::Codec(Codec::default())),
             _ => Err(UnknownAttribute(attr)),
         }
     }
 }
 
-impl Parse for ActorAttr {
+impl Parse for PayloadAttr {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let original = input.fork();
         let attr: AnyIdent = input.parse()?;
         let attr = attr.0;
 
-        match ActorAttr::try_from(attr.to_string()) {
-            Ok(ActorAttr::Dispatch(_)) => {
+        match PayloadAttr::try_from(attr.to_string()) {
+            Ok(PayloadAttr::Codec(_)) => {
                 input.parse::<syn::token::Eq>()?;
                 let val = match input.parse::<syn::LitStr>() {
-                    Ok(str) => match Dispatch::try_from(str.value()) {
+                    Ok(str) => match Codec::try_from(str.value()) {
                         Ok(state_attr) => state_attr,
                         Err(err) => return Err(original.error(format!("{}", err))),
                     },
                     Err(err) => {
-                        return Err(original
-                            .error(format!("{}", InvalidDispatchMethodFormat(err.to_string()))))
+                        return Err(
+                            original.error(format!("{}", InvalidCodecFormat(err.to_string())))
+                        )
                     }
                 };
-                Ok(ActorAttr::Dispatch(val))
+                Ok(PayloadAttr::Codec(val))
             }
             Err(err) => Err(original.error(format!("{}", err))),
         }
@@ -53,23 +52,23 @@ impl Parse for ActorAttr {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Dispatch {
-    Numeric,
+pub enum Codec {
+    DagCbor,
 }
 
-impl Default for Dispatch {
+impl Default for Codec {
     fn default() -> Self {
-        Dispatch::Numeric
+        Codec::DagCbor
     }
 }
 
-impl TryFrom<String> for Dispatch {
-    type Error = crate::actor::error::Error;
+impl TryFrom<String> for Codec {
+    type Error = crate::payload::error::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_str() {
-            "method-num" => Ok(Dispatch::Numeric),
-            _ => Err(UnkownDispatchMethod(value)),
+            "dag-cbor" => Ok(Codec::DagCbor),
+            _ => Err(UnknownCodec(value)),
         }
     }
 }

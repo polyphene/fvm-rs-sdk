@@ -51,3 +51,15 @@ error: a slice type, '[u64]', can not be used as a type for an entry point argum
    | ^^^^^^^^^^^^
    |
    = note: this error originates in the attribute macro `fvm_actor` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: unknown attribute 'mock'
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:77:18
+   |
+77 |     #[fvm_export(mock = 1)]
+   |                  ^^^^
+
+error: invalid binding value
+  --> tests/proc-macro-tests/fvm_actor_fail.rs:86:18
+   |
+86 |     #[fvm_export(method_num = "hello")]
+   |                  ^^^^^^^^^^
