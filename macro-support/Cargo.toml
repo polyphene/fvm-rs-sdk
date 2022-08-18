@@ -1,6 +1,6 @@
 [package]
 name = "fvm_rs_sdk_macro_support"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Protocol Labs", "Polyphene <contact@polyphene.io>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ extra-traits = ["syn/extra-traits"]
 strict-macro = []
 
 [dependencies]
-fvm_rs_sdk_backend = { path="../backend", version="1.0.0" }
+fvm_rs_sdk_backend = { path="../backend", version="1.0.1" }
 quote = "^1.0.20"
 proc-macro2 = "^1.0.40"
 syn = { version = "^1.0.98", features = ["visit", "full"] }
