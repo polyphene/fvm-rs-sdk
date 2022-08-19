@@ -6,7 +6,7 @@ use crate::utils::AnyIdent;
 use anyhow::Result;
 use syn::parse::{Parse, ParseStream, Result as SynResult};
 
-use crate::export::error::Error::{InvalidBindingValue, InvalidNumericValue, UnknownAttribute};
+use crate::export::error::Error::{InvalidMethodNumValue, InvalidNumericValue, UnknownAttribute};
 
 #[derive(Clone, Debug)]
 pub enum ExportAttr {
@@ -41,7 +41,7 @@ impl Parse for ExportAttr {
                         })?,
                     )));
                 }
-                Err(original.error(format!("{}", InvalidBindingValue)))
+                Err(original.error(format!("{}", InvalidMethodNumValue)))
             }
             Err(err) => Err(original.error(format!("{}", err))),
         }

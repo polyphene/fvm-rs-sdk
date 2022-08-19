@@ -10,8 +10,8 @@ use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type};
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
-    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MissingBinding, UnexpectedArgReceiver,
-    UnexpectedArgType, UnhandledType,
+    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MissingBindingMethod,
+    UnexpectedArgReceiver, UnexpectedArgType, UnhandledType,
 };
 
 impl<'a> ConvertToAst<ExportAttrs> for &'a mut syn::ImplItemMethod {
@@ -54,7 +54,10 @@ impl<'a> ConvertToAst<ExportAttrs> for &'a mut syn::ImplItemMethod {
 
         // Trying to get a valid dispatch method and value
         let binding_method: &Method = attrs.binding_method().ok_or_else(|| {
-            Diagnostic::error(format!("{}", MissingBinding(self.sig.ident.to_string())))
+            Diagnostic::error(format!(
+                "{}",
+                MissingBindingMethod(self.sig.ident.to_string())
+            ))
         })?;
 
         match binding_method {
@@ -381,7 +384,7 @@ mod tests {
         if let Err(err) = item.macro_parse(&mut program, &mut tokens) {
             assert_eq!(
                 err.to_token_stream().to_string(),
-                "compile_error ! { \"invalid binding value\" }"
+                "compile_error ! { \"invalid 'method_num' value\" }"
             )
         } else {
             panic!("method with #[fvm_export] and invalid value for binding with #[fvm_export] should throw an error")

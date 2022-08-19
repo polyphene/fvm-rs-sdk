@@ -58,7 +58,7 @@ error: unknown attribute 'mock'
 77 |     #[fvm_export(mock = 1)]
    |                  ^^^^
 
-error: invalid binding value
+error: invalid 'method_num' value
   --> tests/proc-macro-tests/fvm_actor_fail.rs:86:18
    |
 86 |     #[fvm_export(method_num = "hello")]
