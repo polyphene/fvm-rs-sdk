@@ -6,10 +6,10 @@ extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
 
+use crate::payload::attrs::PayloadAttrs;
 use backend::Diagnostic;
 use proc_macro2::TokenStream;
 
-use crate::actor::attrs::ActorAttrs;
 use crate::state::attrs::StateAttrs;
 
 mod actor;
@@ -46,12 +46,12 @@ pub fn expand(
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
         }
-        MacroType::Actor => {
-            let attrs: ActorAttrs = syn::parse2(attr)?;
+        MacroType::Payload => {
+            let attrs: PayloadAttrs = syn::parse2(attr)?;
 
             item.macro_parse(&mut program, (Some(attrs), &mut tokens))?;
         }
-        MacroType::Payload => {
+        _ => {
             item.macro_parse(&mut program, &mut tokens)?;
         }
     }

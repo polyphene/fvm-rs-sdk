@@ -9,17 +9,17 @@ pub struct State {
 
 #[fvm_actor]
 impl State {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn new() -> Self {
         State { value: 0 }
     }
 
-    #[fvm_export(binding = 2)]
+    #[fvm_export(method_num = 2)]
     pub fn add(&mut self, value: u64) {
         self.value += value
     }
 
-    #[fvm_export(binding = 3)]
+    #[fvm_export(method_num = 3)]
     pub fn read(&self) -> u64 {
         self.value
     }
