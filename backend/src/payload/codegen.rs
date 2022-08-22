@@ -20,6 +20,7 @@ impl ToTokens for ast::PayloadStruct {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::payload::attrs::Codec::DagCbor;
     use crate::TryToTokens;
 
     #[test]
@@ -56,6 +57,7 @@ mod tests {
                 let ast_struct = ast::PayloadStruct {
                     rust_name: s.ident.to_token_stream(),
                     name: s.ident.to_string(),
+                    codec: DagCbor,
                 };
 
                 // Create ast::Program

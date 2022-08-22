@@ -24,19 +24,19 @@ use std::ops::Neg;
 
 #[fvm_actor]
 impl FrcXXXToken for TokenState {
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     fn name(&self) -> String {
         self.name.clone()
     }
-    #[fvm_export(binding = 2)]
+    #[fvm_export(method_num = 2)]
     fn symbol(&self) -> String {
         self.symbol.clone()
     }
-    #[fvm_export(binding = 3)]
+    #[fvm_export(method_num = 3)]
     fn total_supply(&self) -> SupplyReturn {
         self.supply.clone()
     }
-    #[fvm_export(binding = 4)]
+    #[fvm_export(method_num = 4)]
     fn balance_of(&self, params: Address) -> BalanceReturn {
         let id = expect_id(&params);
         let balance = match self.get_balance(id) {
@@ -46,7 +46,7 @@ impl FrcXXXToken for TokenState {
 
         BigIntDe(balance)
     }
-    #[fvm_export(binding = 5)]
+    #[fvm_export(method_num = 5)]
     fn increase_allowance(&mut self, params: ChangeAllowanceParams) -> AllowanceReturn {
         if params.amount.0.is_negative() {
             TokenError::InvalidNegative(format!(
@@ -70,7 +70,7 @@ impl FrcXXXToken for TokenState {
             amount: BigIntDe(new_amount),
         }
     }
-    #[fvm_export(binding = 6)]
+    #[fvm_export(method_num = 6)]
     fn decrease_allowance(&mut self, params: ChangeAllowanceParams) -> AllowanceReturn {
         if params.amount.0.is_negative() {
             TokenError::InvalidNegative(format!(
@@ -95,7 +95,7 @@ impl FrcXXXToken for TokenState {
             amount: BigIntDe(new_allowance),
         }
     }
-    #[fvm_export(binding = 7)]
+    #[fvm_export(method_num = 7)]
     fn revoke_allowance(&mut self, params: RevokeAllowanceParams) -> AllowanceReturn {
         let owner = expect_id(&params.owner);
         let operator = expect_id(&params.operator);
@@ -110,7 +110,7 @@ impl FrcXXXToken for TokenState {
             amount: BigIntDe(TokenAmount::zero()),
         }
     }
-    #[fvm_export(binding = 8)]
+    #[fvm_export(method_num = 8)]
     fn allowance(&self, params: GetAllowanceParams) -> AllowanceReturn {
         let owner = expect_id(&params.owner);
         let operator = expect_id(&params.operator);
@@ -125,7 +125,7 @@ impl FrcXXXToken for TokenState {
             amount: BigIntDe(allowance),
         }
     }
-    #[fvm_export(binding = 9)]
+    #[fvm_export(method_num = 9)]
     fn mint(&mut self, params: MintParams) -> MintReturn {
         if params.amount.0.is_negative() {
             TokenError::InvalidNegative(format!(
@@ -158,7 +158,7 @@ impl FrcXXXToken for TokenState {
             total_supply: BigIntDe(new_supply.clone()),
         }
     }
-    #[fvm_export(binding = 10)]
+    #[fvm_export(method_num = 10)]
     fn burn(&mut self, params: BurnParams) -> BurnReturn {
         if params.amount.0.is_negative() {
             TokenError::InvalidNegative(format!(
@@ -196,7 +196,7 @@ impl FrcXXXToken for TokenState {
             remaining_balance: BigIntDe(new_amount),
         }
     }
-    #[fvm_export(binding = 11)]
+    #[fvm_export(method_num = 11)]
     fn transfer(&mut self, params: TransferParams) -> TransferReturn {
         if params.amount.0.is_negative() {
             TokenError::InvalidNegative(format!(

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fvm_rs_sdk = "1.0.0"
+fvm_rs_sdk = "1.0.1"
 
 [build-dependencies]
 wasm-builder = "3.0.1"

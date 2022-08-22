@@ -11,7 +11,7 @@ pub struct MockStruct1 {
 #[fvm_rs_sdk::actor::fvm_actor]
 impl MockStruct1 {
     // Test mutable state method & different types
-    #[fvm_export(binding = 1)]
+    #[fvm_export(method_num = 1)]
     pub fn first_mock(
         &mut self,
         _a: u64,
@@ -23,18 +23,18 @@ impl MockStruct1 {
         0
     }
     // Test read state method
-    #[fvm_export(binding = 2)]
+    #[fvm_export(method_num = 2)]
     pub fn second_mock(&self) -> u64 {
         0
     }
     // Test pure method
-    #[fvm_export(binding = 3)]
+    #[fvm_export(method_num = 3)]
     pub fn third_mock() -> u64 {
         0
     }
 
     // Test path import for fvm_export
-    #[fvm_rs_sdk::actor::fvm_export(binding = 4)]
+    #[fvm_rs_sdk::actor::fvm_export(method_num = 4)]
     pub fn fourth_mock() -> u64 {
         0
     }

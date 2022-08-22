@@ -1,13 +1,13 @@
 //! Contains all structures that can be parsed from a `TokenStream`. They will be used when generating
 //! code
 
-use crate::actor::attrs::Dispatch;
-use crate::export::attrs::Binding;
+use crate::export::attrs::Method;
 use proc_macro2::{Ident, TokenStream};
 use quote::ToTokens;
 use syn;
 
-use crate::state::attrs::Codec;
+use crate::payload::attrs::Codec as PayloadCodec;
+use crate::state::attrs::Codec as StateCodec;
 use crate::{Diagnostic, TryToTokens};
 
 /// An abstract syntax tree representing a rust program.
@@ -53,7 +53,7 @@ pub struct StateStruct {
     /// All the fields of this struct to export
     pub fields: Vec<StateStructField>,
     /// Codec used to store state
-    pub codec: Codec,
+    pub codec: StateCodec,
 }
 
 /// The field of a struct
@@ -78,8 +78,6 @@ pub struct ActorImplementation {
     pub rust_name: TokenStream,
     /// The name of the implementation in code
     pub name: String,
-    /// The internal dispatch method selected for the actor
-    pub dispatch: Dispatch,
     /// The entry points that are available for the actor
     pub entry_points: Vec<ActorEntryPoint>,
 }
@@ -92,8 +90,8 @@ pub struct ActorEntryPoint {
     pub rust_name: TokenStream,
     /// The name of the method in code
     pub name: String,
-    /// The internal entry point value specified for the method
-    pub binding: Binding,
+    /// The internal entry point type & value specified for the method
+    pub binding: Method,
     /// The mutability of the method
     pub mutability: Mutability,
     /// Boolean to know if entry point return data
@@ -134,4 +132,6 @@ pub struct PayloadStruct {
     pub rust_name: TokenStream,
     /// The name of the struct for the SDK
     pub name: String,
+    /// Codec used for the payload
+    pub codec: PayloadCodec,
 }

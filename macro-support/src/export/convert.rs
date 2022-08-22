@@ -1,9 +1,8 @@
 //! Convert reads a source `TokenStream` to prepare the backend to generate custom code
 
 use crate::utils::ConvertToAst;
-use backend::actor::attrs::Dispatch;
 use backend::ast::Mutability;
-use backend::export::attrs::Binding;
+use backend::export::attrs::Method;
 use backend::{ast, Diagnostic};
 use proc_macro2::TokenStream;
 use quote::ToTokens;
@@ -11,17 +10,14 @@ use syn::{FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type};
 
 use crate::export::attrs::ExportAttrs;
 use crate::export::error::Error::{
-    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MismatchedDispatchBinding, MissingBinding,
+    ExpectedBindingToNewVariable, GenericsOnEntryPoint, MissingBindingMethod,
     UnexpectedArgReceiver, UnexpectedArgType, UnhandledType,
 };
 
-impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod {
+impl<'a> ConvertToAst<ExportAttrs> for &'a mut syn::ImplItemMethod {
     type Target = ast::ActorEntryPoint;
 
-    fn convert(
-        self,
-        (dispatch, attrs): (&Dispatch, ExportAttrs),
-    ) -> Result<Self::Target, Diagnostic> {
+    fn convert(self, attrs: ExportAttrs) -> Result<Self::Target, Diagnostic> {
         // Not handling generics on entry point
         if !self.sig.generics.params.is_empty() {
             return Err(Diagnostic::error(format!(
@@ -30,10 +26,6 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             )));
         }
 
-        // Get binding value
-        let binding_value: &Binding = attrs.binding().ok_or_else(|| {
-            Diagnostic::error(format!("{}", MissingBinding(self.sig.ident.to_string())))
-        })?;
         // Get mutability for method
         let mutability = match self.sig.inputs.first() {
             Some(arg) => match arg {
@@ -60,28 +52,23 @@ impl<'a> ConvertToAst<(&Dispatch, ExportAttrs)> for &'a mut syn::ImplItemMethod 
             ReturnType::Type(_, _) => true,
         };
 
-        // Get dispatch method
-        match dispatch {
-            Dispatch::Numeric => {
-                // Match binding value
-                match binding_value {
-                    // For numeric dispatch we expect an integer value
-                    Binding::Numeric(value) => Ok(ast::ActorEntryPoint {
-                        rust_name: self.sig.ident.to_token_stream(),
-                        name: self.sig.ident.to_string(),
-                        binding: Binding::Numeric(*value),
-                        mutability,
-                        returns,
-                        arguments,
-                    }),
-                    // Allow unreachable patters for future evolutions
-                    #[allow(unreachable_patterns)]
-                    _ => Err(Diagnostic::error(format!(
-                        "{}",
-                        MismatchedDispatchBinding(self.sig.ident.to_string(), String::from("u64"))
-                    ))),
-                }
-            }
+        // Trying to get a valid dispatch method and value
+        let binding_method: &Method = attrs.binding_method().ok_or_else(|| {
+            Diagnostic::error(format!(
+                "{}",
+                MissingBindingMethod(self.sig.ident.to_string())
+            ))
+        })?;
+
+        match binding_method {
+            Method::Numeric(value) => Ok(ast::ActorEntryPoint {
+                rust_name: self.sig.ident.to_token_stream(),
+                name: self.sig.ident.to_string(),
+                binding: Method::Numeric(*value),
+                mutability,
+                returns,
+                arguments,
+            }),
         }
     }
 }
@@ -269,10 +256,9 @@ impl<'a> ConvertToAst<()> for &'a Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::actor::attrs::ActorAttrs;
     use crate::utils::MacroParse;
     use backend::ast::Mutability;
-    use backend::export::attrs::Binding;
+    use backend::export::attrs::Method;
     use proc_macro2::TokenStream;
     use quote::quote;
     use quote::ToTokens;
@@ -284,19 +270,19 @@ mod tests {
 
         (quote! {
             impl Actor {
-                #[fvm_export(binding=1)]
+                #[fvm_export(method_num=1)]
                 pub fn new() -> Self {
                     Actor {
                         count: 0
                     }
                 }
 
-                #[fvm_export(binding=2)]
+                #[fvm_export(method_num=2)]
                 pub fn add(&mut self, value: u64) {
                     self.count += value
                 }
 
-                #[fvm_export(binding=3)]
+                #[fvm_export(method_num=3)]
                 pub fn read(&self) -> u64 {
                     self.count
                 }
@@ -304,28 +290,19 @@ mod tests {
         })
         .to_tokens(&mut struct_token_stream);
 
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        item.macro_parse(&mut program, (Some(attrs), &mut tokens))
-            .unwrap();
+        item.macro_parse(&mut program, &mut tokens).unwrap();
 
         let actor_entry_points = &program.actor_implementation.unwrap().entry_points;
         assert_eq!(actor_entry_points.len(), 3);
 
         assert_eq!(actor_entry_points[0].name, String::from("new"));
-        assert_eq!(actor_entry_points[0].binding, Binding::Numeric(1));
+        assert_eq!(actor_entry_points[0].binding, Method::Numeric(1));
         match actor_entry_points[0].mutability {
             Mutability::Pure => {}
             _ => panic!("method with no receiver should be pure"),
@@ -333,7 +310,7 @@ mod tests {
         assert!(actor_entry_points[0].returns);
 
         assert_eq!(actor_entry_points[1].name, String::from("add"));
-        assert_eq!(actor_entry_points[1].binding, Binding::Numeric(2));
+        assert_eq!(actor_entry_points[1].binding, Method::Numeric(2));
         match actor_entry_points[1].mutability {
             Mutability::Write => {}
             _ => panic!("method with mutable receiver should be write"),
@@ -341,7 +318,7 @@ mod tests {
         assert!(!actor_entry_points[1].returns);
 
         assert_eq!(actor_entry_points[2].name, String::from("read"));
-        assert_eq!(actor_entry_points[2].binding, Binding::Numeric(3));
+        assert_eq!(actor_entry_points[2].binding, Method::Numeric(3));
         match actor_entry_points[2].mutability {
             Mutability::View => {}
             _ => panic!("method with receiver should be view"),
@@ -365,21 +342,13 @@ mod tests {
         })
         .to_tokens(&mut struct_token_stream);
 
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+        if let Err(err) = item.macro_parse(&mut program, &mut tokens) {
             assert_eq!(
             err.to_token_stream().to_string(),
             "compile_error ! { \"expected attribute arguments in parentheses: #[fvm_export(...)]\" }"
@@ -396,7 +365,7 @@ mod tests {
 
         (quote! {
             impl Actor {
-                #[fvm_export(binding="toto")]
+                #[fvm_export(method_num="toto")]
                 pub fn new() -> Self {
                     Actor {
                         count: 0
@@ -406,24 +375,16 @@ mod tests {
         })
         .to_tokens(&mut struct_token_stream);
 
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+        if let Err(err) = item.macro_parse(&mut program, &mut tokens) {
             assert_eq!(
                 err.to_token_stream().to_string(),
-                "compile_error ! { \"invalid binding value\" }"
+                "compile_error ! { \"invalid 'method_num' value\" }"
             )
         } else {
             panic!("method with #[fvm_export] and invalid value for binding with #[fvm_export] should throw an error")
@@ -447,21 +408,13 @@ mod tests {
         })
         .to_tokens(&mut struct_token_stream);
 
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+        if let Err(err) = item.macro_parse(&mut program, &mut tokens) {
             assert_eq!(
                 err.to_token_stream().to_string(),
                 "compile_error ! { \"unknown attribute 'hello'\" }"
@@ -478,7 +431,7 @@ mod tests {
 
         (quote! {
             impl Actor {
-                #[fvm_export(binding=1)]
+                #[fvm_export(method_num=1)]
                 fn mock<T: Sized>() -> T {
                     T::new()
                 }
@@ -486,21 +439,13 @@ mod tests {
         })
         .to_tokens(&mut struct_token_stream);
 
-        // Mock attrs
-        let mut attrs_token_stream = TokenStream::new();
-        (quote! {
-            dispatch = "method-num"
-        })
-        .to_tokens(&mut attrs_token_stream);
-
         // Parse struct and attrs
         let item = syn::parse2::<syn::Item>(struct_token_stream).unwrap();
-        let attrs: ActorAttrs = syn::parse2(attrs_token_stream).unwrap();
 
         let mut tokens = TokenStream::new();
         let mut program = backend::ast::Program::default();
 
-        if let Err(err) = item.macro_parse(&mut program, (Some(attrs), &mut tokens)) {
+        if let Err(err) = item.macro_parse(&mut program, &mut tokens) {
             assert_eq!(
                 err.to_token_stream().to_string(),
                 "compile_error ! { \"'mock' can not be used as an entry point. Methods with #[fvm_export] cannot have lifetime or type parameters.\" }"
